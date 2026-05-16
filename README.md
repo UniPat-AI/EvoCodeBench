@@ -4,8 +4,6 @@
 
 # EvoCode-Bench: Persistent Multi-Turn Coding Evaluation
 
-[![Paper](https://img.shields.io/badge/Paper-PDF-b91c1c?style=for-the-badge)](assets/evocodebench.pdf)
-[![Dataset](https://img.shields.io/badge/🤗_Dataset-HuggingFace-orange?style=for-the-badge)](https://huggingface.co/datasets/anonymousee8/evocodebench)
 [![Terminal-X](https://img.shields.io/badge/Terminal--X-GitHub-24292F?style=for-the-badge&logo=github&logoColor=white)](https://github.com/UniPat-AI/Terminal-X)
 [![Harbor Multi-Turn](https://img.shields.io/badge/Harbor-Multi--Turn-blue?style=for-the-badge&logo=github&logoColor=white)](https://github.com/UniPat-AI/harbor_multiturn)
 [![Leaderboard](https://img.shields.io/badge/Leaderboard-UniPat_AI-brightgreen?style=for-the-badge)](https://unipat.ai/benchmarks/EvoCode-Bench)
@@ -87,8 +85,6 @@ export HARBOR_MULTITURN_REPO=/path/to/harbor_multiturn
 ### 1. Prerequisites
 
 ```bash
-pip install -r requirements.txt
-
 # uv is used to run the Harbor CLI from the harbor_multiturn checkout.
 # See https://docs.astral.sh/uv/getting-started/installation/
 curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -99,12 +95,9 @@ export HARBOR_MULTITURN_REPO=/path/to/harbor_multiturn
 
 You also need Docker running and an OpenAI-compatible model endpoint.
 
-### 2. Download Tasks
+### 2. Prepare Tasks
 
-```bash
-pip install huggingface-hub
-huggingface-cli download anonymousee8/evocodebench --repo-type dataset --local-dir data/EvoCodeBench
-```
+Place the released EvoCode-Bench task directories under `data/EvoCodeBench`.
 
 If you already have the Terminal-X repository, the tasks are also available under:
 
