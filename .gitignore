@@ -1,0 +1,14 @@
+data/
+results/
+collected/
+.runs/
+harbor_jobs/
+state/
+log/
+trial.log
+*.env
+__pycache__/
+*.pyc
+.venv/
+*.tar
+
