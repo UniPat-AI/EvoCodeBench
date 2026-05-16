@@ -2,13 +2,13 @@
 
 <img src="assets/hero.png" alt="EvoCode-Bench" width="72%" />
 
-# EvoCode-Bench: Persistent Multi-Turn Coding Evaluation
+# EvoCode-Bench: Evaluating Coding Agents in Multi-Turn Iterative Interactions
 
 ![Dataset](https://img.shields.io/badge/Dataset-TBD-orange?style=for-the-badge)
 [![GitHub](https://img.shields.io/badge/GitHub-EvoCodeBench-24292F?style=for-the-badge&logo=github&logoColor=white)](https://github.com/UniPat-AI/EvoCodeBench)
 ![Paper](https://img.shields.io/badge/Paper-arXiv_TBD-b91c1c?style=for-the-badge)
 [![More Work](https://img.shields.io/badge/More_Work-Terminal--X-24292F?style=for-the-badge&logo=github&logoColor=white)](https://github.com/UniPat-AI/Terminal-X)
-[![Harbor Multi-Turn](https://img.shields.io/badge/Harbor-Multi--Turn-blue?style=for-the-badge&logo=github&logoColor=white)](https://github.com/UniPat-AI/harbor_multiturn)
+[![Framework](https://img.shields.io/badge/Framework-Harbor_Multi--Turn-blue?style=for-the-badge&logo=github&logoColor=white)](https://github.com/UniPat-AI/harbor_multiturn)
 [![Leaderboard](https://img.shields.io/badge/Leaderboard-UniPat_AI-brightgreen?style=for-the-badge)](https://unipat.ai/benchmarks/EvoCode-Bench)
 
 </div>
@@ -16,10 +16,6 @@
 ---
 
 EvoCode-Bench evaluates whether coding agents can maintain executable artifacts as user requirements evolve. It contains **26 stateful coding tasks** spanning **227 evaluated rounds**. Each task preserves the agent's workspace and agent session across **5-15 rounds**, while cumulative executable tests check both new requirements and regressions against still-active prior requirements.
-
-<p align="center">
-  <img src="assets/overview.png" width="100%" alt="EvoCode-Bench overview">
-</p>
 
 ## Overview
 
@@ -235,7 +231,7 @@ EvoCode-Bench is the **iteration** component of [Terminal-X](https://github.com/
 
 ```bibtex
 @misc{evocodebench2026,
-  title  = {EvoCode-Bench: Persistent Multi-Turn Coding Evaluation},
+  title  = {EvoCode-Bench: Evaluating Coding Agents in Multi-Turn Iterative Interactions},
   author = {UniPat AI Coding Team},
   year   = {2026},
   url    = {https://github.com/UniPat-AI/EvoCodeBench}
