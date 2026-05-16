@@ -1,8 +1,9 @@
 <div align="center">
 
-<img src="assets/hero.png" alt="EvoCode-Bench" width="72%" />
-
-# EvoCode-Bench: Evaluating Coding Agents in Multi-Turn Iterative Interactions
+<h1>
+  <img src="assets/hero.png" alt="EvoCode-Bench logo" width="42" />
+  EvoCode-Bench: Evaluating Coding Agents in Multi-Turn Iterative Interactions
+</h1>
 
 ![Dataset](https://img.shields.io/badge/Dataset-TBD-orange?style=for-the-badge)
 [![GitHub](https://img.shields.io/badge/GitHub-EvoCodeBench-24292F?style=for-the-badge&logo=github&logoColor=white)](https://github.com/UniPat-AI/EvoCodeBench)
