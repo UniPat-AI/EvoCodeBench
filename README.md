@@ -16,11 +16,11 @@
 
 ---
 
-EvoCode-Bench evaluates whether coding agents can maintain executable artifacts as user requirements evolve. It contains **26 stateful coding tasks** spanning **227 evaluated rounds**. Each task preserves the agent's workspace and agent session across **5-15 rounds**, while cumulative executable tests check both new requirements and regressions against still-active prior requirements.
+EvoCode-Bench tests whether coding agents can keep a project working as user requests change. It contains **26 stateful coding tasks** and **227 evaluated rounds**. Each task keeps the same workspace and agent session for **5-15 rounds**, while cumulative executable tests check new requirements and still-active prior requirements.
 
 ## Overview
 
-Most coding benchmarks evaluate one specification followed by one final assessment. EvoCode-Bench targets a different capability: persistent reliability across an interactive coding session. Later rounds inherit earlier implementation decisions, dependencies, file layouts, API choices, and test behavior. A single regression can invalidate the remaining trajectory under fail-stop scoring.
+Most coding benchmarks evaluate one specification followed by one final assessment. EvoCode-Bench instead evaluates an interactive coding session. Later rounds inherit earlier implementation decisions, dependencies, file layouts, API choices, and test behavior. Under fail-stop scoring, one regression can stop the rest of the trajectory.
 
 The benchmark is organized along two axes from the paper:
 
@@ -55,10 +55,10 @@ task/
 └── round_N/
 ```
 
-Three constraints are central:
+The task format is built around three constraints:
 
 - **Persistent workspace**: the same Docker container carries files, dependencies, and generated artifacts across rounds.
-- **Continuous agent session**: the agent sees a natural sequence of user requests rather than independent prompts.
+- **Continuous agent session**: the agent receives a sequence of user requests rather than independent prompts.
 - **Cumulative tests**: round `i` verifies every still-active requirement from rounds `1..i`, so regressions are caught immediately.
 
 ## Harbor Multi-Turn
@@ -70,7 +70,7 @@ git clone git@github.com:UniPat-AI/harbor_multiturn.git /path/to/harbor_multitur
 export HARBOR_MULTITURN_REPO=/path/to/harbor_multiturn
 ```
 
-`harbor_multiturn` is the evaluation scaffold used by the paper. It extends Harbor with:
+`harbor_multiturn` is the evaluation scaffold used by the paper. It adds:
 
 - round boundary orchestration;
 - persistent Docker workspace state;
@@ -218,7 +218,7 @@ Top-line paper results:
 | GPT-5.5 | 52.4 | 74.4 | 38.5 |
 | Claude-Opus-4.6 | 44.0 | 78.9 | 34.6 |
 
-The key finding is that SR exceeds MT@4 by 22-40 points for most agents, showing that isolated instruction-following does not imply persistent multi-turn reliability.
+SR exceeds MT@4 by 22-40 points for most agents. Isolated round-solving is much easier than keeping the agent's own workspace correct across many rounds.
 
 <p align="center">
   <img src="assets/sr_vs_mt_by_round.png" width="100%" alt="SR versus MT by round">
@@ -226,7 +226,7 @@ The key finding is that SR exceeds MT@4 by 22-40 points for most agents, showing
 
 ## Relation to Terminal-X
 
-EvoCode-Bench is the **iteration** component of [Terminal-X](https://github.com/UniPat-AI/Terminal-X), alongside DeepTerminalBench for single-shot depth and RoadmapBench for version-upgrade evolution. Terminal-X provides the combined benchmark suite and cross-dataset blog; this repository isolates the EvoCode-Bench task format, evaluation protocol, and multi-turn runner.
+EvoCode-Bench is the **iteration** component of [Terminal-X](https://github.com/UniPat-AI/Terminal-X), alongside DeepTerminalBench for single-shot depth and RoadmapBench for version upgrades. Terminal-X contains the combined benchmark suite and cross-dataset blog; this repository focuses on the EvoCode-Bench task format, evaluation protocol, and multi-turn runner.
 
 ## Citation
 
