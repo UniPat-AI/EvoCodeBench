@@ -16,6 +16,10 @@
 
 ---
 
+## News
+
+**May 2026.** EvoCode-Bench currently runs on our internal [Harbor multi-turn evaluation framework](https://github.com/UniPat-AI/harbor_multiturn). Harbor has now officially added multi-step task support for multi-turn evaluation, and we are actively adapting EvoCode-Bench data to [Harbor's new official multi-step format](https://harborframework.com/docs/tasks/multi-step).
+
 EvoCode-Bench tests whether coding agents can keep a project working as user requests change. It contains **26 stateful coding tasks** and **227 evaluated rounds**. Each task keeps the same workspace and agent session for **5-15 rounds**, while cumulative executable tests check new requirements and still-active prior requirements.
 
 ## Overview
