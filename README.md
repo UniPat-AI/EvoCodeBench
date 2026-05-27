@@ -5,9 +5,9 @@
   EvoCode-Bench: Evaluating Coding Agents in Multi-Turn Iterative Interactions
 </h1>
 
-![Dataset](https://img.shields.io/badge/Dataset-TBD-orange?style=for-the-badge)
+[![Dataset](https://img.shields.io/badge/Dataset-Hugging_Face-orange?style=for-the-badge)](https://huggingface.co/datasets/UnipatAI/EvoCodeBench)
 [![GitHub](https://img.shields.io/badge/GitHub-EvoCodeBench-24292F?style=for-the-badge&logo=github&logoColor=white)](https://github.com/UniPat-AI/EvoCodeBench)
-![Paper](https://img.shields.io/badge/Paper-arXiv_TBD-b91c1c?style=for-the-badge)
+[![Paper](https://img.shields.io/badge/Paper-arXiv_2605.24110-b91c1c?style=for-the-badge)](https://arxiv.org/abs/2605.24110)
 [![More Work](https://img.shields.io/badge/More_Work-Terminal--X-24292F?style=for-the-badge&logo=github&logoColor=white)](https://github.com/UniPat-AI/Terminal-X)
 [![Framework](https://img.shields.io/badge/Framework-Harbor_Multi--Turn-blue?style=for-the-badge&logo=github&logoColor=white)](https://github.com/UniPat-AI/harbor_multiturn)
 [![Leaderboard](https://img.shields.io/badge/Leaderboard-UniPat_AI-brightgreen?style=for-the-badge)](https://unipat.ai/benchmarks/EvoCode-Bench)
@@ -101,7 +101,7 @@ You also need Docker running and an OpenAI-compatible model endpoint.
 
 ### 2. Prepare Tasks
 
-Place the released EvoCode-Bench task directories under `data/EvoCodeBench`.
+Download the released EvoCode-Bench archives from [Hugging Face](https://huggingface.co/datasets/UnipatAI/EvoCodeBench), then place the extracted task directories under `data/EvoCodeBench`.
 
 If you already have the Terminal-X repository, the tasks are also available under:
 
@@ -235,11 +235,14 @@ EvoCode-Bench is the **iteration** component of [Terminal-X](https://github.com/
 ## Citation
 
 ```bibtex
-@misc{evocodebench2026,
-  title  = {EvoCode-Bench: Evaluating Coding Agents in Multi-Turn Iterative Interactions},
-  author = {UniPat AI Coding Team},
-  year   = {2026},
-  url    = {https://github.com/UniPat-AI/EvoCodeBench}
+@misc{shen2026evocodebench,
+  title = {EvoCode-Bench: Evaluating Coding Agents in Multi-Turn Iterative Interactions},
+  author = {Haiyang Shen and Xuanzhong Chen and Wendong Xu and Yun Ma and Liang Chen and Kuan Li},
+  year = {2026},
+  eprint = {2605.24110},
+  archivePrefix = {arXiv},
+  primaryClass = {cs.SE},
+  url = {https://arxiv.org/abs/2605.24110}
 }
 ```
 
