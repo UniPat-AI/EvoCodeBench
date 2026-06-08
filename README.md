@@ -132,13 +132,19 @@ Upstream Harbor's official multi-step runner provides:
 
 ### 1. Prerequisites
 
+- **Python 3.11+** (the `evaluation/*.py` helpers use the stdlib `tomllib`).
+- **Docker** running, or a remote Daytona target.
+- A model endpoint for your agent.
+
+Install the Harbor CLI:
+
 ```bash
 # uv runs the Harbor CLI. See https://docs.astral.sh/uv/getting-started/installation/
 curl -LsSf https://astral.sh/uv/install.sh | sh
 uv tool install harbor      # or: pip install harbor
 ```
 
-You also need Docker running (or a remote Daytona target) and a model endpoint.
+`pip install harbor` (upstream) runs full tasks (all steps). Single-Round Fast-Forward (SR) additionally needs our fork — see [Single-Round Fast-Forward](#single-round-fast-forward-sr).
 
 ### 2. Prepare Tasks
 
