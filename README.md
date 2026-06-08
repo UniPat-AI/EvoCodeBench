@@ -18,7 +18,7 @@
 
 ## News
 
-**June 2026.** EvoCode-Bench has **migrated to [Harbor's official multi-step task format](https://harborframework.com/docs/tasks/multi-step)**. It previously ran on our [`harbor_multiturn`](https://github.com/UniPat-AI/harbor_multiturn) evaluation framework; that format and its runner are preserved under [`legacy/`](legacy/) for reproducibility of the paper's original evaluation. On the official format, each task is a sequence of `[[steps]]` run in one persistent container, with a per-step verifier after each step and trial-level reward aggregation.
+**June 2026.** EvoCode-Bench has **migrated to [Harbor's official multi-step task format](https://harborframework.com/docs/tasks/multi-step)**. It previously ran on our [`harbor_multiturn`](https://github.com/UniPat-AI/harbor_multiturn) evaluation framework; that format and its runner are preserved under [`legacy/`](legacy/) for reproducibility of the paper's original evaluation. On the official format, each task is a sequence of `[[steps]]` run in one persistent container, with a per-step verifier after each step and trial-level reward aggregation. The published [results](#results) (MT@4 / SR / Comp) were measured on the legacy scaffold; an **official-format re-evaluation is in progress (results pending).**
 
 EvoCode-Bench tests whether coding agents can keep a project working as user requests change. It contains **26 stateful coding tasks** and **227 evaluated rounds** (Harbor *steps*). Each task keeps the same workspace and agent session for **5-15 rounds**, while cumulative executable tests check new requirements and still-active prior requirements.
 
@@ -106,14 +106,14 @@ The task format is built around three constraints:
 
 ## Framework
 
-EvoCode-Bench's standard multi-step evaluation runs on **upstream [Harbor](https://harborframework.com)** — the same framework used by Terminal-Bench 2.0 — using its native multi-step support. No fork is required to run a full task (all steps).
+EvoCode-Bench runs on [Harbor](https://harborframework.com) — the same framework used by Terminal-Bench 2.0 — using its multi-step task support.
 
 ```bash
 uv tool install harbor      # or: pip install harbor
 harbor run --help
 ```
 
-Upstream Harbor's official multi-step runner provides:
+Harbor's multi-step runner provides:
 
 - native `[[steps]]` sequencing in the order declared in `task.toml`;
 - a single persistent Docker workspace shared across all steps;
@@ -260,11 +260,15 @@ python evaluation/compute_metrics.py \
 
 ## Results
 
+> **Scaffold note.** The numbers below were measured on the **legacy [`harbor_multiturn`](legacy/) scaffold** (fail-stop MT@4), as reported in the paper. Re-evaluation under the **official Harbor multi-step format** (per-step mean reward) is **in progress — official-format results pending.**
+
+### Legacy results (`harbor_multiturn` scaffold, fail-stop MT@4)
+
 <p align="center">
   <img src="assets/main_results.png" width="100%" alt="EvoCode-Bench main results">
 </p>
 
-Paper results (original evaluation; MT@4 / SR / Comp as defined in the paper):
+MT@4 / SR / Comp as defined in the paper, measured on the legacy scaffold:
 
 | Agent | MT@4 | SR | Comp |
 |:--|--:|--:|--:|
@@ -277,6 +281,14 @@ SR exceeds MT@4 by 22-40 points for most agents. Isolated round-solving is much 
 <p align="center">
   <img src="assets/sr_vs_mt_by_round.png" width="100%" alt="SR versus MT by round">
 </p>
+
+### Official multi-step results (Harbor official format, per-step mean reward)
+
+_Pending._ A full re-evaluation under the official Harbor multi-step format has not yet been published here. The official metric is the **per-step mean reward**; this table will be filled once the official-format run completes.
+
+| Agent | Mean reward |
+|:--|--:|
+| _to be measured_ | – |
 
 ## Relation to Terminal-X
 
