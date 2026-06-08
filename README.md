@@ -9,7 +9,7 @@
 [![GitHub](https://img.shields.io/badge/GitHub-EvoCodeBench-24292F?style=for-the-badge&logo=github&logoColor=white)](https://github.com/UniPat-AI/EvoCodeBench)
 [![Paper](https://img.shields.io/badge/Paper-arXiv_2605.24110-b91c1c?style=for-the-badge)](https://arxiv.org/abs/2605.24110)
 [![More Work](https://img.shields.io/badge/More_Work-Terminal--X-24292F?style=for-the-badge&logo=github&logoColor=white)](https://github.com/UniPat-AI/Terminal-X)
-[![Framework](https://img.shields.io/badge/Framework-Harbor_Multi--Turn-blue?style=for-the-badge&logo=github&logoColor=white)](https://github.com/UniPat-AI/harbor_multiturn)
+[![Framework](https://img.shields.io/badge/Framework-Harbor_Official_Multi--Step-blue?style=for-the-badge)](https://harborframework.com/docs/tasks/multi-step)
 [![Leaderboard](https://img.shields.io/badge/Leaderboard-UniPat_AI-brightgreen?style=for-the-badge)](https://unipat.ai/benchmarks/EvoCode-Bench)
 
 </div>
@@ -18,13 +18,13 @@
 
 ## News
 
-**May 2026.** EvoCode-Bench currently runs on our internal [Harbor multi-turn evaluation framework](https://github.com/UniPat-AI/harbor_multiturn). Harbor has now officially added multi-step task support for multi-turn evaluation, and we are actively adapting EvoCode-Bench data to [Harbor's new official multi-step format](https://harborframework.com/docs/tasks/multi-step).
+**June 2026.** EvoCode-Bench has **migrated to [Harbor's official multi-step task format](https://harborframework.com/docs/tasks/multi-step)**. It previously ran on our [`harbor_multiturn`](https://github.com/UniPat-AI/harbor_multiturn) evaluation framework; that format and its runner are preserved under [`legacy/`](legacy/) for reproducibility of the paper's original evaluation. On the official format, each task is a sequence of `[[steps]]` run in one persistent container, with a per-step verifier after each step and trial-level reward aggregation.
 
-EvoCode-Bench tests whether coding agents can keep a project working as user requests change. It contains **26 stateful coding tasks** and **227 evaluated rounds**. Each task keeps the same workspace and agent session for **5-15 rounds**, while cumulative executable tests check new requirements and still-active prior requirements.
+EvoCode-Bench tests whether coding agents can keep a project working as user requests change. It contains **26 stateful coding tasks** and **227 evaluated rounds** (Harbor *steps*). Each task keeps the same workspace and agent session for **5-15 rounds**, while cumulative executable tests check new requirements and still-active prior requirements.
 
 ## Overview
 
-Most coding benchmarks evaluate one specification followed by one final assessment. EvoCode-Bench instead evaluates an interactive coding session. Later rounds inherit earlier implementation decisions, dependencies, file layouts, API choices, and test behavior. Under fail-stop scoring, one regression can stop the rest of the trajectory.
+Most coding benchmarks evaluate one specification followed by one final assessment. EvoCode-Bench instead evaluates an interactive coding session. Later rounds inherit earlier implementation decisions, dependencies, file layouts, API choices, and test behavior. Each round (Harbor step) is scored by a cumulative verifier, and the trial reward is the mean of the per-step rewards.
 
 The benchmark is organized along two axes from the paper:
 
@@ -36,95 +36,138 @@ The benchmark is organized along two axes from the paper:
 | Migration | 3 / 29 | 1 / 7 | 1 / 8 | 5 / 44 |
 | **Total** | **16 / 138** | **6 / 58** | **4 / 31** | **26 / 227** |
 
-Each cell reports **tasks / rounds**.
+Each cell reports **tasks / rounds**. A *round* maps one-to-one to a Harbor *step*.
 
 ## Task Format
 
-EvoCode-Bench extends the Harbor task format with explicit round directories:
+EvoCode-Bench tasks use the **Harbor official multi-step layout** — one sub-directory per step under `steps/`, executed in the order declared by the `[[steps]]` array in `task.toml`:
 
 ```text
 task/
-├── task.toml                    # metadata, round count, change types
-├── instruction.md               # top-level task statement
+├── task.toml                       # metadata + [[steps]] list + reward strategy
 ├── environment/
-│   └── Dockerfile               # shared Docker environment
-├── round_1/
-│   ├── instruction.md           # round-specific user request
-│   ├── solution/solve.sh        # reference delta for this round
-│   └── tests/test.sh            # cumulative tests through round 1
-├── round_2/
-│   ├── instruction.md
-│   ├── solution/solve.sh
-│   └── tests/test.sh            # cumulative tests through round 2
-└── round_N/
+│   └── Dockerfile                  # single container shared across all steps
+└── steps/
+    ├── round-1/
+    │   ├── instruction.md          # this round's user request (WHAT, not HOW)
+    │   ├── solution/solve.sh        # reference delta for this round
+    │   └── tests/test.sh           # cumulative tests through this round
+    ├── round-2/
+    │   ├── instruction.md
+    │   ├── solution/solve.sh
+    │   └── tests/test.sh
+    └── round-N/ ...
+```
+
+`task.toml` follows the official schema (`schema_version = "1.2"`):
+
+```toml
+schema_version = "1.2"
+multi_step_reward_strategy = "mean"      # trial reward = mean of per-step rewards
+
+[metadata]
+name = "service-mesh-health-router"
+difficulty = "hard"
+category = "systems-networking"
+
+[metadata.requirement_chain]
+num_steps = 8
+
+[[metadata.requirement_chain.steps]]
+step = "round-1"
+change_types = ["extension"]
+# ... one entry per step (extension / correction / conflict)
+
+[agent]
+timeout_sec = 1800.0                      # global default; override per step via [steps.agent]
+
+[verifier]
+timeout_sec = 1800.0                      # global default; override per step via [steps.verifier]
+
+[environment]
+build_timeout_sec = 600.0
+cpus = 1
+memory_mb = 4096
+storage_mb = 10240
+
+[[steps]]
+name = "round-1"                          # matches steps/round-1/
+
+[[steps]]
+name = "round-2"
+# ... one [[steps]] entry per step, in execution order
 ```
 
 The task format is built around three constraints:
 
-- **Persistent workspace**: the same Docker container carries files, dependencies, and generated artifacts across rounds.
+- **Persistent workspace**: the same Docker container carries files, dependencies, and generated artifacts across steps.
 - **Continuous agent session**: the agent receives a sequence of user requests rather than independent prompts.
-- **Cumulative tests**: round `i` verifies every still-active requirement from rounds `1..i`, so regressions are caught immediately.
+- **Cumulative tests**: round `i` verifies every still-active requirement from rounds `1..i`, so regressions are caught immediately. Each step's `tests/test.sh` writes a binary reward to `/logs/verifier/reward.txt`.
 
-## Harbor Multi-Turn
+## Framework
 
-EvoCode-Bench requires the multi-turn Harbor fork:
+EvoCode-Bench runs on [Harbor](https://harborframework.com) — the same framework used by Terminal-Bench 2.0 — using its multi-step task support.
 
 ```bash
-git clone git@github.com:UniPat-AI/harbor_multiturn.git /path/to/harbor_multiturn
-export HARBOR_MULTITURN_REPO=/path/to/harbor_multiturn
+uv tool install harbor      # or: pip install harbor
+harbor run --help
 ```
 
-`harbor_multiturn` is the evaluation scaffold used by the paper. It adds:
+Harbor's multi-step runner provides:
 
-- round boundary orchestration;
-- persistent Docker workspace state;
-- continuous agent-session state for multi-round runs;
-- cumulative verifier swaps per round;
-- reference fast-forwarding for SR-style single-round evaluation;
-- snapshot/resume lineage for long runs;
-- fail-stop reward aggregation into `verifier/multiround_results.json` and `verifier/reward.txt`.
+- native `[[steps]]` sequencing in the order declared in `task.toml`;
+- a single persistent Docker workspace shared across all steps;
+- a continuous agent session across steps;
+- a per-step verifier run against the cumulative test suite after each step;
+- trial-level reward aggregation via `multi_step_reward_strategy` (`mean` for EvoCode-Bench).
+
+**Single-Round Fast-Forward (SR)** — solving a target round after fast-forwarding the earlier rounds with reference deltas — is **not yet supported upstream**. It is provided by our Harbor fork [`harbor-official-fast-forward`](https://github.com/UniPat-AI/harbor-official-fast-forward), which adds `--fast-forward-mode oracle-solution` on top of official Harbor. (The legacy [`harbor_multiturn`](legacy/) framework also supports SR.)
+
+| Capability | Upstream Harbor | `harbor-official-fast-forward` (our fork) | legacy `harbor_multiturn` |
+|:--|:--:|:--:|:--:|
+| Full multi-step run (all steps) | ✓ | ✓ | ✓ |
+| Single-round fast-forward (SR) | ✗ (not yet) | ✓ | ✓ |
 
 ## Quick Start
 
 ### 1. Prerequisites
 
-```bash
-# uv is used to run the Harbor CLI from the harbor_multiturn checkout.
-# See https://docs.astral.sh/uv/getting-started/installation/
-curl -LsSf https://astral.sh/uv/install.sh | sh
+- **Python 3.11+** (the `evaluation/*.py` helpers use the stdlib `tomllib`).
+- **Docker** running, or a remote Daytona target.
+- A model endpoint for your agent.
 
-git clone git@github.com:UniPat-AI/harbor_multiturn.git /path/to/harbor_multiturn
-export HARBOR_MULTITURN_REPO=/path/to/harbor_multiturn
+Install the Harbor CLI:
+
+```bash
+# uv runs the Harbor CLI. See https://docs.astral.sh/uv/getting-started/installation/
+curl -LsSf https://astral.sh/uv/install.sh | sh
+uv tool install harbor      # or: pip install harbor
 ```
 
-You also need Docker running and an OpenAI-compatible model endpoint.
+`pip install harbor` (upstream) runs full tasks (all steps). Single-Round Fast-Forward (SR) additionally needs our fork — see [Single-Round Fast-Forward](#single-round-fast-forward-sr).
 
 ### 2. Prepare Tasks
 
-Download the released EvoCode-Bench archives from [Hugging Face](https://huggingface.co/datasets/UnipatAI/EvoCodeBench), then place the extracted task directories under `data/EvoCodeBench`.
-
-If you already have the Terminal-X repository, the tasks are also available under:
-
-```text
-Terminal-X/data/EvoCodeBench/
-```
+Download the released EvoCode-Bench task directories from [Hugging Face](https://huggingface.co/datasets/UnipatAI/EvoCodeBench) and place them under `data/EvoCodeBench`. If you already have the Terminal-X repository, the tasks are also available under `Terminal-X/data/EvoCodeBench/`.
 
 ### 3. Configure Model Endpoint
 
-For the default `terminus-2` agent:
+For the `claude-code` agent:
 
 ```bash
-export OPENAI_API_KEY="sk-..."
-export OPENAI_API_BASE="https://api.your-provider.com/v1"
-export AGENT_MODEL="openai/gpt-5.5"
+export AGENT_TYPE="claude-code"
+export AGENT_MODEL="claude-opus-4-7"
+export ANTHROPIC_BASE_URL="https://api.your-provider.com"
+export ANTHROPIC_AUTH_TOKEN="sk-..."
 ```
 
-Optional:
+For the `terminus-2` agent (OpenAI-compatible):
 
 ```bash
 export AGENT_TYPE="terminus-2"
-export AGENT_ATTEMPTS=4
-export HARBOR_N_CONCURRENT=4
+export AGENT_MODEL="openai/gpt-5.5"
+export OPENAI_API_KEY="sk-..."
+export OPENAI_API_BASE="https://api.your-provider.com/v1"
 ```
 
 ### 4. Validate the Dataset
@@ -133,80 +176,87 @@ export HARBOR_N_CONCURRENT=4
 python evaluation/validate_dataset.py data/EvoCodeBench
 ```
 
-The released benchmark should report **26 tasks** and **227 rounds**.
+The released benchmark should report **26 tasks** and **227 steps**.
 
 ### 5. Run One Task
 
 ```bash
-AGENT_MODEL=openai/gpt-5.5 AGENT_ATTEMPTS=4 \
-  ./evaluation/run_multiround_single.sh data/EvoCodeBench/theme_d1_w1_code_build_greenfield_implementation agent
-```
+# Agent (pass@1 by default; set AGENT_ATTEMPTS for pass@k)
+AGENT_TYPE=claude-code AGENT_MODEL=claude-opus-4-7 \
+  ./evaluation/run_single.sh data/EvoCodeBench/theme_d1_w1_code_build_greenfield_implementation agent
 
-Oracle verification:
+# Oracle verification (reference solutions; should score 1.0 on every step)
+./evaluation/run_single.sh data/EvoCodeBench/theme_d1_w1_code_build_greenfield_implementation oracle
 
-```bash
-./evaluation/run_multiround_single.sh data/EvoCodeBench/theme_d1_w1_code_build_greenfield_implementation oracle
+# No-op baseline (empty submission; should score 0)
+./evaluation/run_single.sh data/EvoCodeBench/theme_d1_w1_code_build_greenfield_implementation nop
 ```
 
 ### 6. Run All Tasks
 
 ```bash
-AGENT_MODEL=openai/gpt-5.5 AGENT_ATTEMPTS=4 \
+AGENT_TYPE=claude-code AGENT_MODEL=claude-opus-4-7 \
   ./evaluation/run_all.sh data/EvoCodeBench agent
 ```
 
-By default, each task writes Harbor outputs under:
+Each task writes Harbor outputs under:
 
 ```text
 data/EvoCodeBench/<task>/harbor_jobs/<model>/
 ```
 
-## Single-Round Fast-Forward
+## Single-Round Fast-Forward (SR)
 
 The paper reports SR as a complementary metric: the agent solves a target round after Harbor fast-forwards all previous rounds with reference deltas.
 
-Run only round 5 from a reference-completed prior state:
+> **SR requires our Harbor fork** — upstream Harbor does not yet support `--fast-forward-mode`. Point the runner at [`harbor-official-fast-forward`](https://github.com/UniPat-AI/harbor-official-fast-forward):
+>
+> ```bash
+> git clone git@github.com:UniPat-AI/harbor-official-fast-forward.git
+> export HARBOR_BIN="uv --directory $(pwd)/harbor-official-fast-forward run harbor"
+> ```
+
+Solve only round 5 from a reference-completed prior state:
 
 ```bash
-AGENT_MODEL=openai/gpt-5.5 \
-  ./evaluation/run_multiround_single.sh data/EvoCodeBench/theme_d1_w1_code_build_greenfield_implementation \
-    agent --start-round 5 --max-round 5
+AGENT_MODEL=claude-opus-4-7 \
+  ./evaluation/run_single.sh data/EvoCodeBench/theme_d1_w1_code_build_greenfield_implementation \
+    agent --start-step 5 --end-step 5
 ```
 
-Run rounds 3-7 after fast-forwarding rounds 1-2:
+Solve rounds 3-7 after fast-forwarding rounds 1-2:
 
 ```bash
-AGENT_MODEL=openai/gpt-5.5 \
-  ./evaluation/run_multiround_single.sh data/EvoCodeBench/theme_d1_w1_code_build_greenfield_implementation \
-    agent --start-round 3 --max-round 7
+AGENT_MODEL=claude-opus-4-7 \
+  ./evaluation/run_single.sh data/EvoCodeBench/theme_d1_w1_code_build_greenfield_implementation \
+    agent --start-step 3 --end-step 7
 ```
+
+When `--start-step > 1`, the runner adds `--fast-forward-mode oracle-solution` so the earlier steps are prepared with the reference solutions (this flag exists only in the fork).
 
 ## Metrics
 
-For task `t` with `N_t` rounds, let `r_{t,a,i}` be the cumulative verifier reward for attempt `a` at round `i`. Under fail-stop scoring, failed or unexecuted future rounds count as zero.
+Each step is scored with a **binary reward** — 1 if all of that step's key requirements pass, 0 otherwise — written by the verifier to `/logs/verifier/reward.txt`. Harbor aggregates a trial's per-step rewards into a trial-level reward via `multi_step_reward_strategy = "mean"`.
 
-The main paper reports:
+The primary score is therefore the **mean per-step reward**:
 
-- **MT@4**: `mean_t (1/N_t) sum_i max_{a<=4} r_{t,a,i}`
-- **SR**: single-round pass rate after reference fast-forwarding earlier rounds
-- **Comp**: fraction of tasks completed through the final round in at least one attempt
+- **per-task score** = (passed steps) / (total steps) for the trial;
+- **dataset score** = mean of per-task scores across the 26 tasks.
 
-Compute aggregate metrics from Harbor outputs:
+For continuity with the paper, `compute_metrics.py` also derives the paper's metrics from the same per-step rewards:
 
-```bash
-python evaluation/compute_metrics.py \
-  --tasks-dir data/EvoCodeBench \
-  --results-dir data/EvoCodeBench
-```
-
-JSON output:
+- **MT@4**: `mean_t (1/N_t) sum_i max_{a<=4} r_{t,a,i}` (best-of-4 per round, averaged);
+- **SR**: single-round pass rate after reference fast-forwarding earlier rounds;
+- **Comp**: fraction of tasks completed through the final round in at least one attempt.
 
 ```bash
 python evaluation/compute_metrics.py \
   --tasks-dir data/EvoCodeBench \
   --results-dir data/EvoCodeBench \
-  --json
+  --model claude-opus-4-7          # score one agent; add --json for machine-readable output
 ```
+
+`--model` selects the `harbor_jobs/<model>/` results to score (the `oracle` and `nop` baselines are excluded by default).
 
 ## Results
 
@@ -214,7 +264,7 @@ python evaluation/compute_metrics.py \
   <img src="assets/main_results.png" width="100%" alt="EvoCode-Bench main results">
 </p>
 
-Top-line paper results:
+Paper results (original evaluation; MT@4 / SR / Comp as defined in the paper):
 
 | Agent | MT@4 | SR | Comp |
 |:--|--:|--:|--:|
@@ -230,7 +280,7 @@ SR exceeds MT@4 by 22-40 points for most agents. Isolated round-solving is much 
 
 ## Relation to Terminal-X
 
-EvoCode-Bench is the **iteration** component of [Terminal-X](https://github.com/UniPat-AI/Terminal-X), alongside DeepTerminalBench for single-shot depth and RoadmapBench for version upgrades. Terminal-X contains the combined benchmark suite and cross-dataset blog; this repository focuses on the EvoCode-Bench task format, evaluation protocol, and multi-turn runner.
+EvoCode-Bench is the **iteration** component of [Terminal-X](https://github.com/UniPat-AI/Terminal-X), alongside DeepTerminalBench for single-shot depth and RoadmapBench for version upgrades. Terminal-X contains the combined benchmark suite and cross-dataset blog; this repository focuses on the EvoCode-Bench task format, evaluation protocol, and official-Harbor runner.
 
 ## Citation
 
