@@ -18,7 +18,7 @@
 
 ## News
 
-**June 2026.** EvoCode-Bench has **migrated to [Harbor's official multi-step task format](https://harborframework.com/docs/tasks/multi-step)**. It previously ran on our internal `harbor_multiturn` fork; that format and its runner are preserved under [`legacy/`](legacy/) for reproducibility of the paper's original evaluation. The benchmark now runs on upstream Harbor with no fork required — native `[[steps]]` sequencing, a single persistent container across steps, per-step verifiers, and trial-level reward aggregation.
+**June 2026.** EvoCode-Bench has **migrated to [Harbor's official multi-step task format](https://harborframework.com/docs/tasks/multi-step)**. It previously ran on our [`harbor_multiturn`](https://github.com/UniPat-AI/harbor_multiturn) evaluation framework; that format and its runner are preserved under [`legacy/`](legacy/) for reproducibility of the paper's original evaluation. On the official format, each task is a sequence of `[[steps]]` run in one persistent container, with a per-step verifier after each step and trial-level reward aggregation.
 
 EvoCode-Bench tests whether coding agents can keep a project working as user requests change. It contains **26 stateful coding tasks** and **227 evaluated rounds** (Harbor *steps*). Each task keeps the same workspace and agent session for **5-15 rounds**, while cumulative executable tests check new requirements and still-active prior requirements.
 
