@@ -106,14 +106,14 @@ The task format is built around three constraints:
 
 ## Framework
 
-EvoCode-Bench runs on [Harbor](https://harborframework.com) — the same framework used by Terminal-Bench 2.0 — using its multi-step task support.
+EvoCode-Bench's standard multi-step evaluation runs on **upstream [Harbor](https://harborframework.com)** — the same framework used by Terminal-Bench 2.0 — using its native multi-step support. No fork is required to run a full task (all steps).
 
 ```bash
 uv tool install harbor      # or: pip install harbor
 harbor run --help
 ```
 
-Harbor's multi-step runner provides:
+Upstream Harbor's official multi-step runner provides:
 
 - native `[[steps]]` sequencing in the order declared in `task.toml`;
 - a single persistent Docker workspace shared across all steps;
