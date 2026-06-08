@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
-"""Compute EvoCode-Bench MT-style metrics from Harbor multi-turn outputs.
+"""Compute EvoCode-Bench metrics from official Harbor multi-step outputs.
 
-The script expects Harbor trial directories containing:
+Reads per-step rewards from Harbor trial directories produced by the official
+multi-step runner:
 
-    <trial>/result.json
-    <trial>/verifier/multiround_results.json
+    <trial>/steps/<step-name>/verifier/reward.txt   # binary 1/0 per step
+    <trial>/result.json                              # trial metadata
 
-It groups trials by task slug, computes best-of-attempt round rewards, and
-reports the mean per-task fail-stop score. This matches the paper's MT@4
-definition when each task has four attempts.
+Trials are grouped by task slug (the task directory name appears in the trial
+path). The script reports the official mean per-step reward plus the paper's
+MT@k / Completion metrics derived from the same per-step rewards.
+
+Single-Round (SR) is measured from separate fast-forward runs (see the README's
+Single-Round Fast-Forward section); point --results-dir at those runs to score
+SR with the same per-step reward reading.
 """
 
 from __future__ import annotations
@@ -18,179 +23,138 @@ import json
 import statistics
 import sys
 import tomllib
-from dataclasses import dataclass
+from collections import defaultdict
 from pathlib import Path
-from typing import Any
 
 
-@dataclass
-class TrialRecord:
-    task: str
-    num_rounds: int
-    round_rewards: dict[int, float]
-    reward: float | None
-    aggregate_start: int | None
-    aggregate_end: int | None
-    turns: float | None
-    output_tokens: float | None
-
-
-def load_num_rounds(task_dir: Path) -> int:
-    with (task_dir / "task.toml").open("rb") as f:
-        data = tomllib.load(f)
-    return int(data["metadata"]["multiround"]["num_rounds"])
-
-
-def task_index(tasks_dir: Path) -> dict[str, int]:
-    index: dict[str, int] = {}
-    for task_dir in sorted(tasks_dir.iterdir()):
-        if (task_dir / "task.toml").exists():
-            index[task_dir.name] = load_num_rounds(task_dir)
+def task_step_names(tasks_dir: Path) -> dict[str, list[str]]:
+    index: dict[str, list[str]] = {}
+    for task in sorted(tasks_dir.iterdir()):
+        cfg_path = task / "task.toml"
+        if not cfg_path.exists():
+            continue
+        try:
+            with cfg_path.open("rb") as f:
+                cfg = tomllib.load(f)
+        except Exception:  # noqa: BLE001
+            continue
+        names = [s.get("name") for s in (cfg.get("steps") or []) if s.get("name")]
+        if names:
+            index[task.name] = names
     return index
 
 
-def find_task_slug(path: Path, tasks: dict[str, int]) -> str | None:
+def trial_step_rewards(trial_dir: Path, step_names: list[str]) -> dict[int, float]:
+    rewards: dict[int, float] = {}
+    for i, name in enumerate(step_names, start=1):
+        rf = trial_dir / "steps" / name / "verifier" / "reward.txt"
+        if rf.exists():
+            try:
+                rewards[i] = float(rf.read_text().strip())
+            except (ValueError, OSError):
+                pass
+    return rewards
+
+
+def find_slug(path: Path, slugs: dict[str, list[str]]) -> str | None:
     parts = set(path.parts)
-    for slug in tasks:
+    for slug in slugs:
         if slug in parts:
             return slug
     return None
 
 
-def read_json(path: Path) -> Any:
-    with path.open("r", encoding="utf-8") as f:
-        return json.load(f)
+def jobs_bucket(path: Path) -> str | None:
+    """Return the harbor_jobs/<bucket>/ name for a trial path (e.g. the model, or 'oracle'/'nop')."""
+    parts = path.parts
+    if "harbor_jobs" in parts:
+        i = parts.index("harbor_jobs")
+        if i + 1 < len(parts):
+            return parts[i + 1]
+    return None
 
 
-def load_trial(result_path: Path, tasks: dict[str, int]) -> TrialRecord | None:
-    task = find_task_slug(result_path, tasks)
-    if task is None:
-        return None
-
-    trial_dir = result_path.parent
-    mr_path = trial_dir / "verifier" / "multiround_results.json"
-    if not mr_path.exists():
-        return None
-
-    result = read_json(result_path)
-    mr = read_json(mr_path)
-
-    rewards: dict[int, float] = {}
-    for item in mr:
-        if not isinstance(item, dict):
-            continue
-        round_num = item.get("round")
-        reward = item.get("reward")
-        if isinstance(round_num, int) and isinstance(reward, (int, float)):
-            rewards[round_num] = float(reward)
-
-    verifier = result.get("verifier_result") or {}
-    agent = result.get("agent_result") or {}
-    metadata = agent.get("metadata") or {}
-    turns = metadata.get("n_episodes")
-    output_tokens = agent.get("n_output_tokens")
-
-    return TrialRecord(
-        task=task,
-        num_rounds=tasks[task],
-        round_rewards=rewards,
-        reward=(verifier.get("rewards") or {}).get("reward"),
-        aggregate_start=verifier.get("aggregate_window_start"),
-        aggregate_end=verifier.get("aggregate_window_end"),
-        turns=float(turns) if isinstance(turns, (int, float)) else None,
-        output_tokens=float(output_tokens) if isinstance(output_tokens, (int, float)) else None,
-    )
-
-
-def discover_trials(results_dir: Path, tasks: dict[str, int]) -> list[TrialRecord]:
-    records: list[TrialRecord] = []
-    for result_path in sorted(results_dir.rglob("result.json")):
-        record = load_trial(result_path, tasks)
-        if record is not None:
-            records.append(record)
-    return records
-
-
-def compute(records: list[TrialRecord], tasks: dict[str, int]) -> dict[str, Any]:
-    by_task: dict[str, list[TrialRecord]] = {slug: [] for slug in tasks}
-    for record in records:
-        by_task.setdefault(record.task, []).append(record)
-
-    task_scores: dict[str, float] = {}
-    task_completed: dict[str, bool] = {}
-    attempts_per_task: dict[str, int] = {}
-
-    for slug, num_rounds in tasks.items():
-        trials = by_task.get(slug, [])
-        attempts_per_task[slug] = len(trials)
-        best_rounds: list[float] = []
-        for round_num in range(1, num_rounds + 1):
-            best = 0.0
-            for trial in trials:
-                best = max(best, trial.round_rewards.get(round_num, 0.0))
-            best_rounds.append(best)
-        task_scores[slug] = sum(best_rounds) / num_rounds if num_rounds else 0.0
-        task_completed[slug] = any(t.round_rewards.get(num_rounds, 0.0) >= 1.0 for t in trials)
-
-    mt_score = sum(task_scores.values()) / len(tasks) if tasks else 0.0
-    comp = sum(1 for v in task_completed.values() if v) / len(tasks) if tasks else 0.0
-
-    turns = [r.turns for r in records if r.turns is not None]
-    tokens = [r.output_tokens for r in records if r.output_tokens is not None]
-
-    return {
-        "tasks": len(tasks),
-        "evaluated_tasks": sum(1 for v in attempts_per_task.values() if v > 0),
-        "trials": len(records),
-        "mt_score": mt_score * 100,
-        "completion_rate": comp * 100,
-        "avg_turns": statistics.mean(turns) if turns else None,
-        "output_tokens_k": (statistics.mean(tokens) / 1000) if tokens else None,
-        "task_scores": task_scores,
-        "attempts_per_task": attempts_per_task,
-    }
-
-
-def print_table(metrics: dict[str, Any]) -> None:
-    print("=" * 64)
-    print("EvoCode-Bench Results")
-    print("=" * 64)
-    print(f"  Tasks evaluated:   {metrics['evaluated_tasks']}/{metrics['tasks']}")
-    print(f"  Trials found:       {metrics['trials']}")
-    print(f"  MT score:           {metrics['mt_score']:.1f}")
-    print(f"  Completion rate:    {metrics['completion_rate']:.1f}")
-    if metrics["avg_turns"] is not None:
-        print(f"  Avg turns:          {metrics['avg_turns']:.1f}")
-    if metrics["output_tokens_k"] is not None:
-        print(f"  Output tokens:      {metrics['output_tokens_k']:.1f}K")
-    print("=" * 64)
+def passed(reward: float | None) -> float:
+    return 1.0 if (reward is not None and reward >= 0.999) else 0.0
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--tasks-dir", type=Path, required=True, help="EvoCode-Bench task directory")
-    parser.add_argument("--results-dir", type=Path, required=True, help="Harbor jobs/results directory")
-    parser.add_argument("--json", action="store_true", help="Print JSON instead of a text table")
+    parser.add_argument("--tasks-dir", type=Path, required=True,
+                        help="Directory of EvoCode-Bench task folders (for the [[steps]] index)")
+    parser.add_argument("--results-dir", type=Path, required=True,
+                        help="Directory to scan for Harbor trial result.json files")
+    parser.add_argument("--model", default=None,
+                        help="Only score trials under harbor_jobs/<model>/ (short name, e.g. claude-opus-4-7). "
+                             "Default: score every bucket except the 'oracle' and 'nop' baselines.")
+    parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON")
     args = parser.parse_args()
 
-    if not args.tasks_dir.is_dir():
-        print(f"error: not a directory: {args.tasks_dir}", file=sys.stderr)
-        return 2
-    if not args.results_dir.is_dir():
-        print(f"error: not a directory: {args.results_dir}", file=sys.stderr)
+    tasks = task_step_names(args.tasks_dir)
+    if not tasks:
+        print(f"error: no tasks under {args.tasks_dir}", file=sys.stderr)
         return 2
 
-    tasks = task_index(args.tasks_dir)
-    records = discover_trials(args.results_dir, tasks)
-    metrics = compute(records, tasks)
+    model_short = args.model.split("/")[-1] if args.model else None
+    grouped: dict[str, list[dict[int, float]]] = defaultdict(list)
+    for result in args.results_dir.rglob("result.json"):
+        trial_dir = result.parent
+        if not (trial_dir / "steps").is_dir():
+            continue
+        bucket = jobs_bucket(trial_dir)
+        if model_short is not None:
+            if bucket != model_short:
+                continue
+        elif bucket in ("oracle", "nop"):
+            continue
+        slug = find_slug(trial_dir, tasks)
+        if slug is None:
+            continue
+        grouped[slug].append(trial_step_rewards(trial_dir, tasks[slug]))
+
+    per_task_mean: dict[str, float] = {}   # official: mean over attempts of (fraction of steps passed)
+    per_task_mtk: dict[str, float] = {}    # paper: best-of-attempt per step, then mean over steps
+    completed: dict[str, bool] = {}
+
+    for slug, step_names in tasks.items():
+        n = len(step_names)
+        attempts = grouped.get(slug, [])
+        if not attempts:
+            continue
+        attempt_scores = [sum(passed(tr.get(i)) for i in range(1, n + 1)) / n for tr in attempts]
+        per_task_mean[slug] = statistics.mean(attempt_scores)
+        best_per_step = [max(passed(tr.get(i)) for tr in attempts) for i in range(1, n + 1)]
+        per_task_mtk[slug] = sum(best_per_step) / n
+        completed[slug] = any(passed(tr.get(n)) >= 1.0 for tr in attempts)
+
+    n_tasks = len(tasks)
+    evaluated = len(per_task_mean)
+    mean_reward = 100 * statistics.mean(per_task_mean.values()) if per_task_mean else 0.0
+    mt_at_k = 100 * sum(per_task_mtk.values()) / n_tasks if n_tasks else 0.0
+    comp = 100 * sum(1 for v in completed.values() if v) / n_tasks if n_tasks else 0.0
+    hard = (100 * sum(1 for v in per_task_mean.values() if v <= 0.5) / evaluated) if evaluated else 0.0
+
+    metrics = {
+        "tasks": n_tasks,
+        "evaluated": evaluated,
+        "mean_reward": round(mean_reward, 2),
+        "mt_at_k": round(mt_at_k, 2),
+        "completion_rate": round(comp, 2),
+        "hard_task_rate": round(hard, 2),
+    }
 
     if args.json:
-        print(json.dumps(metrics, indent=2, sort_keys=True))
+        print(json.dumps(metrics, indent=2))
     else:
-        print_table(metrics)
+        print(f"Tasks: {n_tasks}  (evaluated: {evaluated})")
+        print(f"  Mean per-step reward (official): {mean_reward:.1f}")
+        print(f"  MT@k (best-of-attempt):          {mt_at_k:.1f}")
+        print(f"  Completion rate:                 {comp:.1f}")
+        print(f"  Hard-task rate (score <= 0.5):   {hard:.1f}")
+        if evaluated < n_tasks:
+            print(f"  note: {n_tasks - evaluated} task(s) had no trials under {args.results_dir}")
     return 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

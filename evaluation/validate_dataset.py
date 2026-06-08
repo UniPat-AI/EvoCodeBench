@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
-"""Validate EvoCode-Bench task structure and summarize round metadata."""
+"""Validate EvoCode-Bench tasks in the official Harbor multi-step format.
+
+Checks each task directory:
+  - task.toml parses and declares a non-empty [[steps]] array;
+  - every declared step has steps/<name>/{instruction.md, solution/solve.sh, tests/test.sh};
+  - no orphan step directory exists that is not declared in [[steps]];
+  - environment/Dockerfile and task.toml are present.
+
+Reports the task count and per-task step count.
+"""
 
 from __future__ import annotations
 
@@ -9,41 +18,42 @@ import tomllib
 from pathlib import Path
 
 
-def load_task(path: Path) -> dict:
-    with (path / "task.toml").open("rb") as f:
-        return tomllib.load(f)
-
-
 def validate_task(path: Path) -> tuple[int, list[str]]:
     errors: list[str] = []
-    config = load_task(path)
-    multiround = config.get("metadata", {}).get("multiround", {})
-    num_rounds = multiround.get("num_rounds")
-    rounds = multiround.get("rounds", [])
+    try:
+        with (path / "task.toml").open("rb") as f:
+            config = tomllib.load(f)
+    except Exception as exc:  # noqa: BLE001
+        return 0, [f"task.toml could not be parsed: {exc}"]
 
-    if not isinstance(num_rounds, int) or num_rounds < 1:
-        errors.append("metadata.multiround.num_rounds must be a positive integer")
-        return 0, errors
+    steps = config.get("steps") or []
+    if not steps:
+        errors.append("task.toml declares no [[steps]]")
 
-    declared = [r.get("round") for r in rounds]
-    expected = list(range(1, num_rounds + 1))
-    if declared != expected:
-        errors.append(f"round metadata must be contiguous {expected}, got {declared}")
-
-    for round_num in expected:
-        round_dir = path / f"round_{round_num}"
-        if not round_dir.is_dir():
-            errors.append(f"missing round_{round_num}/")
+    names = [s.get("name") for s in steps]
+    for name in names:
+        if not name:
+            errors.append("a [[steps]] entry is missing 'name'")
             continue
-        for rel in ("instruction.md", "tests/test.sh", "solution/solve.sh"):
-            if not (round_dir / rel).exists():
-                errors.append(f"missing round_{round_num}/{rel}")
+        step_dir = path / "steps" / name
+        for rel in ("instruction.md", "solution/solve.sh", "tests/test.sh"):
+            if not (step_dir / rel).exists():
+                errors.append(f"missing steps/{name}/{rel}")
 
-    for rel in ("instruction.md", "environment/Dockerfile", "task.toml"):
+    steps_root = path / "steps"
+    if steps_root.is_dir():
+        on_disk = sorted(d.name for d in steps_root.iterdir() if d.is_dir())
+        orphan = set(on_disk) - set(names)
+        if orphan:
+            errors.append(f"steps/ directories not declared in [[steps]]: {sorted(orphan)}")
+    else:
+        errors.append("missing steps/")
+
+    for rel in ("environment/Dockerfile", "task.toml"):
         if not (path / rel).exists():
             errors.append(f"missing {rel}")
 
-    return num_rounds, errors
+    return len(steps), errors
 
 
 def main() -> int:
@@ -60,28 +70,24 @@ def main() -> int:
         print(f"error: no tasks found under {args.tasks_dir}", file=sys.stderr)
         return 2
 
-    total_rounds = 0
+    total_steps = 0
     failed = 0
     for task in task_dirs:
-        rounds, errors = validate_task(task)
-        total_rounds += rounds
+        num_steps, errors = validate_task(task)
+        total_steps += num_steps
         if errors:
             failed += 1
-            print(f"[FAIL] {task.name}")
-            for error in errors:
-                print(f"  - {error}")
+            print(f"FAIL  {task.name}")
+            for err in errors:
+                print(f"        - {err}")
         else:
-            print(f"[ OK ] {task.name}: {rounds} rounds")
+            print(f"ok    {task.name}  ({num_steps} steps)")
 
     print()
-    print(f"tasks: {len(task_dirs)}")
-    print(f"rounds: {total_rounds}")
-    if failed:
-        print(f"invalid tasks: {failed}", file=sys.stderr)
-        return 1
-    return 0
+    print(f"{len(task_dirs) - failed}/{len(task_dirs)} tasks valid  "
+          f"| {len(task_dirs)} tasks, {total_steps} steps total")
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
