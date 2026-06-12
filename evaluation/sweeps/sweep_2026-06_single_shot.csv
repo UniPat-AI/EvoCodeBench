@@ -1,27 +1,27 @@
 task,total_rounds,Claude-Opus-4.8-xhigh,GPT-5.5,GLM-5.1,Qwen3.7-Max,Qwen3.6-Plus,Kimi-K2.6,DeepSeek-V4-Flash,DeepSeek-V4-Pro,MiniMax-M3,MiniMax-M2.7,__note
-theme_d10_w10_ml_ai_mlops_forensics_analysis,9,9/9,1/9,0/9,0/9,0/9,2/9,0/9,0/9,9/9,0/9,passed/total per agent
-theme_d10_w11_ml_ai_mlops_automation_scripting,7,0/7,0/7,0/7,0/7,0/7,2/7,0/7,0/7,0/7,0/7,passed/total per agent
-theme_d10_w12_ml_ai_mlops_explanation_reporting,7,7/7,3/7,0/7,2/7,0/7,7/7,0/7,0/7,6/7,0/7,passed/total per agent
-theme_d10_w2_ml_ai_mlops_brownfield_modification,8,0/8,0/8,0/8,0/8,0/8,0/8,0/8,0/8,0/8,0/8,passed/total per agent
-theme_d10_w4_ml_ai_mlops_migration_upgrade,7,7/7,3/7,1/7,1/7,1/7,3/7,1/7,2/7,4/7,0/7,passed/total per agent
-theme_d10_w4_ml_ai_mlops_migration_upgrade__not_1234,13,11/13,5/13,0/13,0/13,0/13,9/13,0/13,4/13,8/13,1/13,passed/total per agent
-theme_d10_w5_ml_ai_mlops_integration_e2e_wiring,7,0/7,0/7,0/7,0/7,0/7,0/7,0/7,0/7,0/7,0/7,passed/total per agent
-theme_d10_w8_ml_ai_mlops_security_patch_hardening,8,0/8,0/8,0/8,0/8,6/8,5/8,4/8,4/8,0/8,0/8,passed/total per agent
-theme_d10_w9_ml_ai_mlops_reproducibility_verification,8,3/8,3/8,0/8,0/8,0/8,0/8,1/8,0/8,0/8,0/8,passed/total per agent
-theme_d11_w2_scientific_numerical_brownfield_modification,7,7/7,2/7,2/7,0/7,0/7,6/7,0/7,1/7,0/7,0/7,passed/total per agent
-theme_d11_w2_scientific_numerical_brownfield_modification__not_1234,5,1/5,0/5,2/5,0/5,0/5,0/5,0/5,0/5,0/5,0/5,passed/total per agent
-theme_d11_w9_scientific_numerical_reproducibility_verification,8,3/8,7/8,0/8,0/8,0/8,5/8,0/8,0/8,0/8,0/8,passed/total per agent
-theme_d12_w1_automation_productivity_greenfield_implementation,7,0/7,1/7,4/7,0/7,0/7,0/7,5/7,0/7,0/7,5/7,passed/total per agent
-theme_d1_w11_code_build_automation_scripting,8,1/8,1/8,2/8,1/8,1/8,1/8,0/8,1/8,2/8,0/8,passed/total per agent
-theme_d1_w1_code_build_greenfield_implementation,9,2/9,5/9,0/9,1/9,0/9,0/9,1/9,4/9,0/9,0/9,passed/total per agent
-theme_d1_w2_code_build_brownfield_modification,8,6/8,2/8,0/8,0/8,0/8,1/8,0/8,0/8,0/8,0/8,passed/total per agent
-theme_d1_w5_code_build_integration_e2e_wiring,8,1/8,1/8,0/8,1/8,2/8,1/8,1/8,2/8,2/8,0/8,passed/total per agent
-theme_d1_w9_code_build_reproducibility_verification,7,7/7,2/7,1/7,2/7,1/7,5/7,0/7,1/7,1/7,0/7,passed/total per agent
-theme_d3_w9_testing_quality_reproducibility_verification,7,0/7,2/7,0/7,0/7,7/7,0/7,0/7,0/7,0/7,0/7,passed/total per agent
-theme_d5_w1_data_engineering_greenfield_implementation,13,9/13,4/13,1/13,0/13,1/13,0/13,0/13,0/13,0/13,0/13,passed/total per agent
-theme_d5_w5_data_engineering_integration_e2e_wiring,9,5/9,6/9,0/9,0/9,0/9,1/9,0/9,0/9,0/9,0/9,passed/total per agent
-theme_d5_w9_data_engineering_reproducibility_verification,15,4/15,4/15,0/15,0/15,0/15,0/15,0/15,0/15,0/15,0/15,passed/total per agent
-theme_d6_w1_database_storage_greenfield_implementation,8,0/8,0/8,0/8,0/8,0/8,0/8,0/8,0/8,0/8,0/8,passed/total per agent
-theme_d7_w5_systems_networking_integration_e2e_wiring,8,0/8,0/8,0/8,0/8,0/8,0/8,0/8,0/8,0/8,0/8,passed/total per agent
-theme_d8_w5_cloud_devops_integration_e2e_wiring,11,1/11,0/11,0/11,1/11,0/11,0/11,0/11,0/11,0/11,0/11,passed/total per agent
-theme_d9_w11_security_automation_scripting,15,15/15,3/15,5/15,12/15,2/15,1/15,3/15,9/15,4/15,2/15,passed/total per agent
+theme_d10_w10_ml_ai_mlops_forensics_analysis,9,9/9 c100%,1/9 c97%,0/9 c82%,0/9 c85%,0/9 c84%,2/9 c98%,0/9 c80%,0/9 c82%,9/9 c100%,0/9 c68%,each cell: passed_rounds/total · c=mean case pass %
+theme_d10_w11_ml_ai_mlops_automation_scripting,7,0/7 c97%,0/7 c97%,0/7 c7%,0/7 c37%,0/7 c62%,2/7 c68%,0/7 c29%,0/7 c62%,0/7 c90%,0/7 c40%,each cell: passed_rounds/total · c=mean case pass %
+theme_d10_w12_ml_ai_mlops_explanation_reporting,7,7/7 c100%,3/7 c76%,0/7 c56%,2/7 c92%,0/7 c30%,7/7 c100%,0/7 c73%,0/7 c23%,6/7 c99%,0/7 c22%,each cell: passed_rounds/total · c=mean case pass %
+theme_d10_w2_ml_ai_mlops_brownfield_modification,8,0/8 c76%,0/8 c80%,0/8 c40%,0/8 c28%,0/8 c58%,0/8 c55%,0/8 c32%,0/8 c49%,0/8 c80%,0/8 c7%,each cell: passed_rounds/total · c=mean case pass %
+theme_d10_w4_ml_ai_mlops_migration_upgrade,7,7/7 c100%,3/7 c99%,1/7 c46%,1/7 c83%,1/7 c91%,3/7 c96%,1/7 c51%,2/7 c69%,4/7 c97%,0/7 c93%,each cell: passed_rounds/total · c=mean case pass %
+theme_d10_w4_ml_ai_mlops_migration_upgrade__not_1234,13,11/13 c100%,5/13 c85%,0/13 c78%,0/13 c75%,0/13 c91%,9/13 c98%,0/13 c92%,4/13 c93%,8/13 c98%,1/13 c83%,each cell: passed_rounds/total · c=mean case pass %
+theme_d10_w5_ml_ai_mlops_integration_e2e_wiring,7,0/7 c98%,0/7 c98%,0/7 c19%,0/7 c93%,0/7 c69%,0/7 c97%,0/7 c48%,0/7 c94%,0/7 c97%,0/7 c18%,each cell: passed_rounds/total · c=mean case pass %
+theme_d10_w8_ml_ai_mlops_security_patch_hardening,8,0/8 c35%,0/8 c47%,0/8 c0%,0/8 c47%,6/8 c97%,5/8 c96%,4/8 c94%,4/8 c72%,0/8 c81%,0/8 c8%,each cell: passed_rounds/total · c=mean case pass %
+theme_d10_w9_ml_ai_mlops_reproducibility_verification,8,3/8 c100%,3/8 c95%,0/8 c34%,0/8 c71%,0/8 c96%,0/8 c50%,1/8 c94%,0/8 c68%,0/8 c82%,0/8 c82%,each cell: passed_rounds/total · c=mean case pass %
+theme_d11_w2_scientific_numerical_brownfield_modification,7,7/7 c100%,2/7 c83%,2/7 c84%,0/7 c44%,0/7 c97%,6/7 c99%,0/7 c73%,1/7 c93%,0/7 c61%,0/7 c70%,each cell: passed_rounds/total · c=mean case pass %
+theme_d11_w2_scientific_numerical_brownfield_modification__not_1234,5,1/5 c99%,0/5 c96%,2/5 c99%,0/5 c60%,0/5 c76%,0/5 c96%,0/5 c97%,0/5 c93%,0/5 c94%,0/5 c23%,each cell: passed_rounds/total · c=mean case pass %
+theme_d11_w9_scientific_numerical_reproducibility_verification,8,3/8 c99%,7/8 c98%,0/8 c97%,0/8 c94%,0/8 c70%,5/8 c96%,0/8 c90%,0/8 c94%,0/8 c96%,0/8 c78%,each cell: passed_rounds/total · c=mean case pass %
+theme_d12_w1_automation_productivity_greenfield_implementation,7,0/7 c47%,1/7 c59%,4/7 c85%,0/7 c38%,0/7 c27%,0/7 c38%,5/7 c100%,0/7 c38%,0/7 c19%,5/7 c100%,each cell: passed_rounds/total · c=mean case pass %
+theme_d1_w11_code_build_automation_scripting,8,1/8 c95%,1/8 c78%,2/8 c93%,1/8 c90%,1/8 c92%,1/8 c88%,0/8 c69%,1/8 c90%,2/8 c60%,0/8 c79%,each cell: passed_rounds/total · c=mean case pass %
+theme_d1_w1_code_build_greenfield_implementation,9,2/9 c51%,5/9 c69%,0/9 c6%,1/9 c50%,0/9 c42%,0/9 c56%,1/9 c41%,4/9 c60%,0/9 c53%,0/9 c31%,each cell: passed_rounds/total · c=mean case pass %
+theme_d1_w2_code_build_brownfield_modification,8,6/8 c98%,2/8 c52%,0/8 c29%,0/8 c25%,0/8 c30%,1/8 c71%,0/8 c17%,0/8 c48%,0/8 c84%,0/8 c49%,each cell: passed_rounds/total · c=mean case pass %
+theme_d1_w5_code_build_integration_e2e_wiring,8,1/8 c95%,1/8 c95%,0/8 c59%,1/8 c77%,2/8 c95%,1/8 c83%,1/8 c53%,2/8 c52%,2/8 c66%,0/8 c66%,each cell: passed_rounds/total · c=mean case pass %
+theme_d1_w9_code_build_reproducibility_verification,7,7/7 c100%,2/7 c72%,1/7 c82%,2/7 c83%,1/7 c84%,5/7 c93%,0/7 c46%,1/7 c47%,1/7 c49%,0/7 c68%,each cell: passed_rounds/total · c=mean case pass %
+theme_d3_w9_testing_quality_reproducibility_verification,7,0/7 c76%,2/7 c89%,0/7 c65%,0/7 c70%,7/7 c100%,0/7 c98%,0/7 c7%,0/7 c27%,0/7 c42%,0/7 c15%,each cell: passed_rounds/total · c=mean case pass %
+theme_d5_w1_data_engineering_greenfield_implementation,13,9/13 c99%,4/13 c39%,1/13 c27%,0/13 c46%,1/13 c26%,0/13 c28%,0/13 c7%,0/13 c21%,0/13 c38%,0/13 c22%,each cell: passed_rounds/total · c=mean case pass %
+theme_d5_w5_data_engineering_integration_e2e_wiring,9,5/9 c99%,6/9 c99%,0/9 c1%,0/9 c2%,0/9 c2%,1/9 c73%,0/9 c17%,0/9 c12%,0/9 c22%,0/9 c7%,each cell: passed_rounds/total · c=mean case pass %
+theme_d5_w9_data_engineering_reproducibility_verification,15,4/15 c93%,4/15 c85%,0/15 c19%,0/15 c89%,0/15 c65%,0/15 c72%,0/15 c34%,0/15 c41%,0/15 c75%,0/15 c6%,each cell: passed_rounds/total · c=mean case pass %
+theme_d6_w1_database_storage_greenfield_implementation,8,0/8 c98%,0/8 c89%,0/8 c75%,0/8 c73%,0/8 c28%,0/8 c64%,0/8 c47%,0/8 c23%,0/8 c46%,0/8 c0%,each cell: passed_rounds/total · c=mean case pass %
+theme_d7_w5_systems_networking_integration_e2e_wiring,8,0/8 c72%,0/8 c82%,0/8 c13%,0/8 c20%,0/8 c11%,0/8 c30%,0/8 c0%,0/8 c10%,0/8 c19%,0/8 c0%,each cell: passed_rounds/total · c=mean case pass %
+theme_d8_w5_cloud_devops_integration_e2e_wiring,11,1/11 c96%,0/11 c9%,0/11 c34%,1/11 c81%,0/11 c68%,0/11 c94%,0/11 c70%,0/11 c92%,0/11 c76%,0/11 c66%,each cell: passed_rounds/total · c=mean case pass %
+theme_d9_w11_security_automation_scripting,15,15/15 c100%,3/15 c29%,5/15 c77%,12/15 c100%,2/15 c77%,1/15 c56%,3/15 c77%,9/15 c75%,4/15 c72%,2/15 c82%,each cell: passed_rounds/total · c=mean case pass %

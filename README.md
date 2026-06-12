@@ -216,6 +216,18 @@ The score is the **mean per-step reward**:
 - **per-task score** = (passed steps) / (total steps) for the trial;
 - **dataset score** = mean of per-task scores across the 26 tasks.
 
+A complementary **case score** uses the same shape at finer granularity. Each step's verifier
+also reports per-test-case results (`CASE_SUMMARY total_cases=… success_count=…`). Define:
+
+- **per-step case ratio** = `success_count / total_cases` for the step (a step whose code fails to
+  build, or that the chain never reached, has ratio 0);
+- **per-task case score** = mean of the per-step case ratios over the task's steps;
+- **dataset case score** = mean of per-task case scores across the 26 tasks ×100.
+
+The dataset score is all-or-nothing per step, so it rewards finishing a step exactly; the case score
+credits partial progress (e.g. passing 44 of 45 cases). A large gap between the two for a model means it
+gets most of the work right but rarely lands a whole step.
+
 ```bash
 python evaluation/compute_metrics.py \
   --tasks-dir data/EvoCodeBench \
@@ -236,26 +248,36 @@ full 5–15 round chains, **one attempt per task** (no best-of-k). The score is 
 task's `passed_steps / total_steps`. All cells are from complete chains; `oracle`
 scores 1.0 and `nop` scores 0 on every task.
 
-| Agent | Reasoning | Dataset score | Perfect tasks |
-|:--|:--|--:|--:|
-| Claude-Opus-4.8 | effort `xhigh` | 40.9 | 6/26 |
-| GPT-5.5 | effort `high` | 23.5 | 0/26 |
-| Kimi-K2.6 | thinking on¹ | 23.1 | 1/26 |
-| MiniMax-M3 | thinking `adaptive` | 15.2 | 1/26 |
-| DeepSeek-V4-Pro | effort `high` | 10.8 | 0/26 |
-| Qwen3.6-Plus | thinking on¹ | 10.1 | 1/26 |
-| GLM-5.1 | thinking on¹ | 8.5 | 0/26 |
-| Qwen3.7-Max | thinking on¹ | 7.6 | 0/26 |
-| DeepSeek-V4-Flash | effort `high` | 7.4 | 0/26 |
-| MiniMax-M2.7 | reasoning split | 3.6 | 0/26 |
+| Agent | Reasoning | Dataset score | Case score | Perfect tasks |
+|:--|:--|--:|--:|--:|
+| Claude-Opus-4.8 | effort `xhigh` | 40.9 | 89.3 | 6/26 |
+| GPT-5.5 | effort `high` | 23.5 | 76.8 | 0/26 |
+| Kimi-K2.6 | thinking on¹ | 23.1 | 76.6 | 1/26 |
+| MiniMax-M3 | thinking `adaptive` | 15.2 | 69.1 | 1/26 |
+| DeepSeek-V4-Pro | effort `high` | 10.8 | 58.9 | 0/26 |
+| Qwen3.6-Plus | thinking on¹ | 10.1 | 64.1 | 1/26 |
+| GLM-5.1 | thinking on¹ | 8.5 | 50.3 | 0/26 |
+| Qwen3.7-Max | thinking on¹ | 7.6 | 63.5 | 0/26 |
+| DeepSeek-V4-Flash | effort `high` | 7.4 | 55.3 | 0/26 |
+| MiniMax-M2.7 | reasoning split | 3.6 | 45.5 | 0/26 |
 
-*Dataset score* is the mean per-task score ×100 (= mean per-step reward). *Reasoning*
-is the thinking configuration used for each model: models with an effort knob ran at the
+*Dataset score* is the mean per-task score ×100, where a task's score is `passed_rounds / total_rounds`
+and a round is "passed" only if it earns the binary reward 1 (**every** test case of that round passes).
+
+*Case score* is the finer-grained companion. For each task, take each round's
+`passed_test_cases / total_test_cases`, average over the task's rounds (a round whose code fails to build,
+or that the chain never reached, counts as 0), then average over the 26 tasks ×100. It credits the partial
+progress the all-or-nothing round reward hides — e.g. GPT-5.5 scores 23.5 on rounds but passes **76.8%** of
+test cases, because it often misses a round by just one or two cases. Both scores rank Opus-4.8 first, but
+the case score spreads the field more smoothly.
+
+*Reasoning* is the thinking configuration used for each model: models with an effort knob ran at the
 listed level (Opus at its highest, `xhigh`; the rest at `high`); ¹ models without an
 effort knob ran with their native thinking simply enabled (Qwen `enable_thinking`,
 GLM/Kimi `thinking.type=enabled`), and MiniMax M3/M2.7 used their adaptive / split
 reasoning modes. All agents used the `terminus-2` scaffold.
-Per-task / per-round detail: [`evaluation/sweeps/sweep_2026-06_single_shot.csv`](evaluation/sweeps/sweep_2026-06_single_shot.csv).
+Per-task / per-round / per-test-case detail: [`evaluation/sweeps/sweep_2026-06_single_shot.csv`](evaluation/sweeps/sweep_2026-06_single_shot.csv)
+and the [interactive results site](https://unipat-ai.github.io/EvoCodeBench/).
 
 **Explore the results interactively → [unipat-ai.github.io/EvoCodeBench](https://unipat-ai.github.io/EvoCodeBench/)** —
 one page per task with a per-round × per-model test-case heatmap, drill-down into the exact
