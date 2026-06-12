@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>flowr-workflow-orchestrator — EvoCode-Bench</title>
+<link rel="stylesheet" href="../assets/site.css">
+</head><body>
+<div class="wrap">
+  <header class="top">
+    <h1>flowr-workflow-orchestrator</h1>
+    <span class="crumb"><a href="../index.html">← all tasks</a></span>
+  </header>
+  <p class="sub">
+    <span class="pill hard">hard</span>
+    <span class="pill">automation workflow orchestration</span>
+    <span class="pill">7 rounds</span>
+    <span class="pill">theme_d12_w1_automation_productivity_greenfield_implementation</span><br>
+    Build a command-line workflow orchestrator called `flowr`. It reads a YAML workflow file that describes a DAG of shell commands and runs those commands in dependency order with bounded parallelism, ma
+  </p>
+
+  <div class='analysis'><p style='margin:0'><strong>A stunning inversion: DeepSeek-V4-Flash and MiniMax-M2.7 lead at 5/7 rounds with 100% case pass, while Opus-4.8 scores 0/7 at 47% and GPT-5.5 just 1/7 — the small models out-built the flagships.</strong></p></div>
+
+  <h2>What the agent is asked, round by round</h2>
+  <p class="sub" style="margin-top:0">Each round adds new requirements to the same workspace. Click a round to read the exact task the agent was given.</p>
+  <div id="rounds"></div>
+
+  <h2>Per-round test-case results</h2>
+  <div class="keybox">
+    <b>How to read the grid.</b> Every round ships an executable test suite. A cell like <b>43</b>/45&nbsp;<span class="xf">2✗</span>
+    means the model passed <b>43 of the round's 45 test cases</b> and <b>2 failed</b>. The round earns a reward of
+    <b>1 only if every case passes</b> — so a model can pass 43/45 and still score 0 for that round. The case counts
+    show the partial progress the 0/1 round score hides. Cell <b>color = how many cases failed</b> (green = 0).
+    A <b>build&nbsp;✗</b> cell means the model's code did not compile, so the tests could not run (a real 0 — the
+    reference solution builds fine). <b>n/a</b> means that run never reached this round. <b>Click any cell</b> for details below.
+  </div>
+  <div id="heatmap"></div>
+  <div class="legend">cases failed in the cell:
+    <i style="background:#2fae5f"></i>0<i style="background:#8ec74e"></i>1-2<i style="background:#d6c34a"></i>3-5
+    <i style="background:#e89a3c"></i>6-10<i style="background:#e3692f"></i>11-20<i style="background:#d23b34"></i>20+
+    <i style="background:#3a2730"></i>code didn't build<i style="background:#22272f"></i>round not run (n/a)</div>
+  <div id="detail"><span class="ph">Click a cell above to see the round's task and that model's failed requirements.</span></div>
+
+  <h2>Difficulty analysis</h2>
+  <div class='analysis'><p>This task builds <strong>flowr</strong>, a greenfield CLI workflow orchestrator: read a YAML file describing a DAG of shell commands and run them in dependency order with bounded parallelism, retries, conditional steps, and dry-run, across 7 rounds. It is broad feature-plumbing work where finishing the whole feature set matters more than getting one numerical contract exactly right.</p><p>The widely-failed requirements are the later-round features. <span class='req'>F17</span> and <span class='req'>F26</span> (9/10 models each), <span class='req'>F15</span> (8/10), and <span class='req'>F7</span>, <span class='req'>F13</span> and the <span class='req'>regression</span> guard (7 each). The failure reasons make the cause unusually concrete: the strong models simply did not implement features — Opus returns <em>"rc: 4 (err: unknown flag: --dry-run)"</em> on F20 and <em>"unknown step key: foreach"</em> on F15, i.e. the command-line surface is missing entirely, not subtly wrong.</p></div>
+
+  <h2>Per-model failures (whole task)</h2>
+  <p class="sub" style="margin-top:0">Click a model to expand every requirement it failed across all rounds, with a representative reason from the verifier.</p>
+  <div id="breakdown"></div>
+
+  <h2>Performance gap</h2>
+  <div class='analysis'><p>This task inverts the usual hierarchy. The leaders are the <em>fast/cheap</em> tier: <strong>DeepSeek-V4-Flash and MiniMax-M2.7 both reach 5/7 rounds at 100% case pass</strong>, losing only one or two cases each (<span class='req'>F17</span>, <span class='req'>F26</span>). <strong>GLM-5.1 follows at 4/7 (85%)</strong>. These models implemented the full feature set and ran every step cleanly.</p><p>The flagships collapse. <strong>GPT-5.5 manages only 1/7 at 59%</strong>, and <strong>Opus-4.8 scores 0/7 at just 47%</strong>, both bleeding cases on <span class='req'>F7</span> (35–36), <span class='req'>F20</span> (31) and <span class='req'>F13</span> — features they never wired up (the <em>"unknown flag"</em> / <em>"unknown step key"</em> errors), plus the <span class='req'>regression</span> guard (28). MiniMax-M3 is worst at 19%, with <span class='req'>F28</span>/<span class='req'>F27</span> and <span class='req'>regression</span> all broken, and the Qwen pair and DeepSeek-V4-Pro sit at 27–38%. The lesson here is not partial-progress hidden by binary rewards — it is the opposite: the small models genuinely built more of the orchestrator, and the round scores reflect it honestly.</p></div>
+
+  <p class="foot">Test-case data extracted from the verifier <code>CASE_RESULT</code> logs of each model's run.
+    Reasons are the verifier's own <code>failure_reason</code> (back-filled from expected/actual when terse).</p>
+</div>
+
+<script src="../assets/site.js"></script>
+<script>
+fetch("../data/tasks/theme_d12_w1_automation_productivity_greenfield_implementation.json").then(function(r){return r.json();}).then(function(T){
+  window.__MODELS__ = Object.keys(T.models);
+  var detail = document.getElementById("detail");
+  EvoViz.renderRounds(document.getElementById("rounds"), T);
+  EvoViz.renderHeatmap(document.getElementById("heatmap"), T, function(model, round){
+    EvoViz.renderDetail(detail, T, model, round);
+    detail.scrollIntoView({behavior:"smooth", block:"nearest"});
+  });
+  EvoViz.renderBreakdown(document.getElementById("breakdown"), T);
+});
+</script>
+</body></html>

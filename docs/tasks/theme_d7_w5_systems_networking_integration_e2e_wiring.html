@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>service-mesh-health-router — EvoCode-Bench</title>
+<link rel="stylesheet" href="../assets/site.css">
+</head><body>
+<div class="wrap">
+  <header class="top">
+    <h1>service-mesh-health-router</h1>
+    <span class="crumb"><a href="../index.html">← all tasks</a></span>
+  </header>
+  <p class="sub">
+    <span class="pill hard">hard</span>
+    <span class="pill">systems networking integration</span>
+    <span class="pill">8 rounds</span>
+    <span class="pill">theme_d7_w5_systems_networking_integration_e2e_wiring</span><br>
+    Build a service mesh health monitoring and traffic routing system in Go. The system consists of three integrated components that must work together end-to-end: a **health monitor daemon**, a **traffic
+  </p>
+
+  <div class='analysis'><p style='margin:0'><strong>Every model scores 0/8 at the round level, yet most pass 72–82% of test cases — the clearest example of how the binary round reward hides large differences in actual capability.</strong></p></div>
+
+  <h2>What the agent is asked, round by round</h2>
+  <p class="sub" style="margin-top:0">Each round adds new requirements to the same workspace. Click a round to read the exact task the agent was given.</p>
+  <div id="rounds"></div>
+
+  <h2>Per-round test-case results</h2>
+  <div class="keybox">
+    <b>How to read the grid.</b> Every round ships an executable test suite. A cell like <b>43</b>/45&nbsp;<span class="xf">2✗</span>
+    means the model passed <b>43 of the round's 45 test cases</b> and <b>2 failed</b>. The round earns a reward of
+    <b>1 only if every case passes</b> — so a model can pass 43/45 and still score 0 for that round. The case counts
+    show the partial progress the 0/1 round score hides. Cell <b>color = how many cases failed</b> (green = 0).
+    A <b>build&nbsp;✗</b> cell means the model's code did not compile, so the tests could not run (a real 0 — the
+    reference solution builds fine). <b>n/a</b> means that run never reached this round. <b>Click any cell</b> for details below.
+  </div>
+  <div id="heatmap"></div>
+  <div class="legend">cases failed in the cell:
+    <i style="background:#2fae5f"></i>0<i style="background:#8ec74e"></i>1-2<i style="background:#d6c34a"></i>3-5
+    <i style="background:#e89a3c"></i>6-10<i style="background:#e3692f"></i>11-20<i style="background:#d23b34"></i>20+
+    <i style="background:#3a2730"></i>code didn't build<i style="background:#22272f"></i>round not run (n/a)</div>
+  <div id="detail"><span class="ph">Click a cell above to see the round's task and that model's failed requirements.</span></div>
+
+  <h2>Difficulty analysis</h2>
+  <div class='analysis'><p>This task builds a Go <strong>service-mesh health router</strong> from scratch: three integrated components (health monitor, traffic router, rate limiter) wired over a Unix-socket IPC, accumulating to 45 → 147 cumulative test cases across the 8 rounds. Because each round's verifier checks <em>every</em> still-active requirement and the round reward is all-or-nothing, missing even 2 of 45 cases scores the round 0. <strong>No model passes a single round cleanly</strong>, so the round table is a wall of zeros — but the case-level view shows that is a scoring artifact, not uniform failure.</p><p>The genuinely hard sub-features, failed by 6–7 of the 10 models, are: <span class='req'>circuit-breaker</span> (the half-open → closed state machine — reasons like <em>"State: half_open"</em>), <span class='req'>health-monitoring</span> (endpoint health transitions — <em>"Got&nbsp;&nbsp;healthy"</em>), <span class='req'>drain</span> (graceful connection draining), <span class='req'>weight-zero</span> (a healthy endpoint with weight 0 must receive no traffic), <span class='req'>ipc-get-service</span> (per-endpoint circuit state over IPC — <em>"Got 0"</em>), and <span class='req'>retry</span> / <span class='req'>rate-limit-burst</span> (<em>"Only 0 succeeded out of 8"</em>). These are stateful, timing-sensitive behaviours — exactly what tends to break when an agent implements the happy path but not the transitions.</p></div>
+
+  <h2>Per-model failures (whole task)</h2>
+  <p class="sub" style="margin-top:0">Click a model to expand every requirement it failed across all rounds, with a representative reason from the verifier.</p>
+  <div id="breakdown"></div>
+
+  <h2>Performance gap</h2>
+  <div class='analysis'><p>Two tiers emerge. <strong>Opus-4.8 and GPT-5.5 complete all 8 rounds</strong> (72% and 82% case pass) — they build the whole system and only lose specific features. Their weaknesses differ: GPT-5.5's misses concentrate in <span class='req'>ipc-access-log</span> and <span class='req'>ipc-access-stats</span> (access-logging over IPC, 24+20 cases), while Opus loses more on <span class='req'>health-monitoring</span>, <span class='req'>warmup</span> and <span class='req'>connection-limit-mode</span>.</p><p>The other eight models <strong>abort the chain early</strong> — Kimi after round 3, the rest after round 1–2, and DeepSeek-V4-Flash / MiniMax-M2.7 never produce a passing round at all. This is the shared-sandbox fragility of a networking task (leftover bound ports / background processes from one round's tests poisoning the next) interacting with weaker implementations. Among the early-aborters, Qwen3.6-Plus and GLM-5.1 are also genuinely weaker on the cases they do reach (46% / 51%), whereas Qwen3.7-Max and DeepSeek-V4-Pro pass ~81% before stopping — high case quality but unable to keep the workspace stable across rounds.</p></div>
+
+  <p class="foot">Test-case data extracted from the verifier <code>CASE_RESULT</code> logs of each model's run.
+    Reasons are the verifier's own <code>failure_reason</code> (back-filled from expected/actual when terse).</p>
+</div>
+
+<script src="../assets/site.js"></script>
+<script>
+fetch("../data/tasks/theme_d7_w5_systems_networking_integration_e2e_wiring.json").then(function(r){return r.json();}).then(function(T){
+  window.__MODELS__ = Object.keys(T.models);
+  var detail = document.getElementById("detail");
+  EvoViz.renderRounds(document.getElementById("rounds"), T);
+  EvoViz.renderHeatmap(document.getElementById("heatmap"), T, function(model, round){
+    EvoViz.renderDetail(detail, T, model, round);
+    detail.scrollIntoView({behavior:"smooth", block:"nearest"});
+  });
+  EvoViz.renderBreakdown(document.getElementById("breakdown"), T);
+});
+</script>
+</body></html>

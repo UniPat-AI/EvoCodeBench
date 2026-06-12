@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EvoCode-Bench — per-task results</title>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>EvoCode-Bench — per-task results</h1>
+    <span class="crumb"><a href="https://github.com/UniPat-AI/EvoCodeBench">repo</a> · single-shot, 10 models</span>
+  </header>
+  <p class="sub">26 stateful coding tasks. Each row is one task — the score is the <b>dataset per-task score</b>
+    (passed rounds / total rounds, 1 attempt). Click a task to see per-round, per-model <b>test-case</b> pass
+    rates, which cases each model failed and why, and a difficulty / performance-gap analysis.</p>
+
+  <input class="filter" id="f" placeholder="filter tasks (e.g. d7_w5, networking, hard)…" oninput="filt()">
+
+  <table class="idx" id="tbl"><thead id="th"></thead><tbody id="tb"></tbody></table>
+
+  <p class="foot">Round reward is binary (all key requirements pass → 1). Case-level pass rates reveal partial
+    progress the binary round score hides. Grey / "✗" marks chains that aborted before the final round.</p>
+</div>
+
+<script src="assets/site.js"></script>
+<script>
+fetch("data/index.json").then(function(r){return r.json();}).then(function(D){
+  window.__MODELS__ = D.models;
+  // sort models by overall mean score for column order
+  var mean = {};
+  D.models.forEach(function(m){ var s=0,n=0; D.tasks.forEach(function(t){ s+=t.score[m]; n++; }); mean[m]=s/n; });
+  var cols = D.models.slice().sort(function(a,b){ return mean[b]-mean[a]; });
+  // header
+  var th = "<tr><th class='tl'>task</th><th>cat</th><th>diff</th><th>rounds</th>";
+  cols.forEach(function(m){ th += "<th>"+EvoViz.esc(m)+"</th>"; });
+  th += "</tr>"; document.getElementById("th").innerHTML = th;
+  // rows (sorted hardest-first by mean score across models)
+  D.tasks.forEach(function(t){ t._mean = cols.reduce(function(a,m){return a+t.score[m];},0)/cols.length; });
+  D.tasks.sort(function(a,b){ return a._mean-b._mean; });
+  function cellColor(v){ // score 0..1 -> red..green (low = hard)
+    var r,g,b; if(v<0.5){r=210;g=Math.round(70+200*(v/0.5));b=70;} else {r=Math.round(210-170*((v-0.5)/0.5));g=210;b=80;}
+    return "rgb("+r+","+g+","+b+")";
+  }
+  var tb = "";
+  D.tasks.forEach(function(t){
+    var nm = t.task.replace(/^theme_/,"");
+    tb += "<tr data-n='"+EvoViz.esc((nm+" "+t.category+" "+t.difficulty).toLowerCase())+"'>";
+    tb += "<td class='tl'><a href='tasks/"+EvoViz.esc(t.task)+".html'>"+EvoViz.esc(nm)+"</a></td>";
+    tb += "<td class='sc' style='color:var(--mut);font-size:11px'>"+EvoViz.esc(t.category.replace(/-/g,' '))+"</td>";
+    tb += "<td><span class='pill "+EvoViz.esc(t.difficulty)+"'>"+EvoViz.esc(t.difficulty||"?")+"</span></td>";
+    tb += "<td class='sc'>"+t.n_rounds+"</td>";
+    cols.forEach(function(m){
+      var v = t.score[m];
+      tb += "<td class='sc' style='color:"+cellColor(v)+"'>"+Math.round(v*100)+"</td>";
+    });
+    tb += "</tr>";
+  });
+  document.getElementById("tb").innerHTML = tb;
+});
+function filt(){var q=document.getElementById("f").value.toLowerCase();
+  document.querySelectorAll("#tb tr").forEach(function(tr){tr.style.display=tr.dataset.n.indexOf(q)>=0?"":"none";});}
+</script>
+</body>
+</html>

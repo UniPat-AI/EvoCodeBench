@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>lsm-kvstore-engine — EvoCode-Bench</title>
+<link rel="stylesheet" href="../assets/site.css">
+</head><body>
+<div class="wrap">
+  <header class="top">
+    <h1>lsm-kvstore-engine</h1>
+    <span class="crumb"><a href="../index.html">← all tasks</a></span>
+  </header>
+  <p class="sub">
+    <span class="pill hard">hard</span>
+    <span class="pill">database storage</span>
+    <span class="pill">8 rounds</span>
+    <span class="pill">theme_d6_w1_database_storage_greenfield_implementation</span><br>
+    I need a high-performance embedded key-value storage engine built in Go from scratch, using an LSM-Tree (Log-Structured Merge-Tree) architecture with full MVCC (Multi-Version Concurrency Control) supp
+  </p>
+
+  <div class='analysis'><p style='margin:0'><strong>Building an LSM-tree storage engine from scratch defeats every model — 0/8 rounds across the board — and a recurring CLI-parsing bug (treating `--ttl` as a literal value) plus widespread build failures show how brittle from-scratch systems code is.</strong></p></div>
+
+  <h2>What the agent is asked, round by round</h2>
+  <p class="sub" style="margin-top:0">Each round adds new requirements to the same workspace. Click a round to read the exact task the agent was given.</p>
+  <div id="rounds"></div>
+
+  <h2>Per-round test-case results</h2>
+  <div class="keybox">
+    <b>How to read the grid.</b> Every round ships an executable test suite. A cell like <b>43</b>/45&nbsp;<span class="xf">2✗</span>
+    means the model passed <b>43 of the round's 45 test cases</b> and <b>2 failed</b>. The round earns a reward of
+    <b>1 only if every case passes</b> — so a model can pass 43/45 and still score 0 for that round. The case counts
+    show the partial progress the 0/1 round score hides. Cell <b>color = how many cases failed</b> (green = 0).
+    A <b>build&nbsp;✗</b> cell means the model's code did not compile, so the tests could not run (a real 0 — the
+    reference solution builds fine). <b>n/a</b> means that run never reached this round. <b>Click any cell</b> for details below.
+  </div>
+  <div id="heatmap"></div>
+  <div class="legend">cases failed in the cell:
+    <i style="background:#2fae5f"></i>0<i style="background:#8ec74e"></i>1-2<i style="background:#d6c34a"></i>3-5
+    <i style="background:#e89a3c"></i>6-10<i style="background:#e3692f"></i>11-20<i style="background:#d23b34"></i>20+
+    <i style="background:#3a2730"></i>code didn't build<i style="background:#22272f"></i>round not run (n/a)</div>
+  <div id="detail"><span class="ph">Click a cell above to see the round's task and that model's failed requirements.</span></div>
+
+  <h2>Difficulty analysis</h2>
+  <div class='analysis'><p>This is a from-scratch <strong>greenfield</strong> build of <strong>lsm-kvstore</strong>: a high-performance embedded key-value engine in Go using an LSM-Tree — write-ahead log, memtable, on-disk SSTables, compaction/merge, MVCC snapshots, transactions, TTL expiry and prefix compression, 8 rounds, 45-plus cumulative cases. This is the deepest systems task in the set, and <strong>no model passes a single round</strong>: the round table is all zeros.</p><p>Two failure modes dominate. First, the binary itself frequently fails to compile — Kimi-K2.6, MiniMax-M3, DeepSeek-V4-Flash (2 build✗ each), Qwen3.6-Plus and DeepSeek-V4-Pro (5 build✗), and <strong>MiniMax-M2.7 never compiles a single round (8 build✗, 0% cases)</strong>. The reference oracle builds fine, so these are the models' own compile errors, not a task defect. Second, even compiling models share precise behavioural bugs: the on-disk formats in <span class='req'>wal-batch-format</span> / <span class='req'>wal-binary-format</span>, the <span class='req'>verify-command</span> that returns <em>"ERROR: unknown command"</em> because it was never implemented, MVCC merge ordering (<span class='req'>merge-persistence</span> emitting <em>"a,a,b"</em> instead of <em>"a,b"</em>), and a striking TTL bug where the CLI swallows the flag as data — <span class='req'>ttl-batch-put</span> stores the literal <em>"bv1 --ttl 1"</em> instead of expiring the key.</p></div>
+
+  <h2>Per-model failures (whole task)</h2>
+  <p class="sub" style="margin-top:0">Click a model to expand every requirement it failed across all rounds, with a representative reason from the verifier.</p>
+  <div id="breakdown"></div>
+
+  <h2>Performance gap</h2>
+  <div class='analysis'><p>With every model at 0/8, the only meaningful axis is case pass, and it spreads from 98% down to 0%. <strong>Opus-4.8 leads at 98% cases (ran all 8 rounds, no build failures)</strong>, losing only narrow items — <span class='req'>verify-command</span> (42 cases), <span class='req'>tx-delete-range-conflict</span> and <span class='req'>checksum-compaction</span>. GPT-5.5 (89%) and Qwen3.7-Max (83%) follow, their misses concentrated in the WAL/SSTable binary formats and the TTL CLI-parsing bug.</p><p>The weak tier is defined less by logic and more by whether the code builds: GLM-5.1 (75%) ran all rounds but failed the WAL formats; Kimi-K2.6 (85%), DeepSeek-V4-Flash (63%), MiniMax-M3 (62%), DeepSeek-V4-Pro (61%) and Qwen3.6-Plus (76%) all carry 2–5 build✗ rounds that drag their effective coverage down; and MiniMax-M2.7 sits at 0% — eight rounds, eight failed builds, never a working binary. The takeaway: a from-scratch LSM engine is hard enough that the differentiator is simply keeping the program compiling and getting the byte-level on-disk formats right, and not one model managed a fully clean round.</p></div>
+
+  <p class="foot">Test-case data extracted from the verifier <code>CASE_RESULT</code> logs of each model's run.
+    Reasons are the verifier's own <code>failure_reason</code> (back-filled from expected/actual when terse).</p>
+</div>
+
+<script src="../assets/site.js"></script>
+<script>
+fetch("../data/tasks/theme_d6_w1_database_storage_greenfield_implementation.json").then(function(r){return r.json();}).then(function(T){
+  window.__MODELS__ = Object.keys(T.models);
+  var detail = document.getElementById("detail");
+  EvoViz.renderRounds(document.getElementById("rounds"), T);
+  EvoViz.renderHeatmap(document.getElementById("heatmap"), T, function(model, round){
+    EvoViz.renderDetail(detail, T, model, round);
+    detail.scrollIntoView({behavior:"smooth", block:"nearest"});
+  });
+  EvoViz.renderBreakdown(document.getElementById("breakdown"), T);
+});
+</script>
+</body></html>

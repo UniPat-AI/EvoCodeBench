@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ml-eval-report-engine — EvoCode-Bench</title>
+<link rel="stylesheet" href="../assets/site.css">
+</head><body>
+<div class="wrap">
+  <header class="top">
+    <h1>ml-eval-report-engine</h1>
+    <span class="crumb"><a href="../index.html">← all tasks</a></span>
+  </header>
+  <p class="sub">
+    <span class="pill hard">hard</span>
+    <span class="pill">ml tooling</span>
+    <span class="pill">7 rounds</span>
+    <span class="pill">theme_d10_w12_ml_ai_mlops_explanation_reporting</span><br>
+    Implement the ML evaluation report engine defined in `/app/docs/spec_v1.md`.
+  </p>
+
+  <div class='analysis'><p style='margin:0'><strong>A rare task with clean winners — Opus-4.8 and Kimi-K2.6 both go 7/7 at 100% — while the rest fall off a cliff into 0/7 despite case rates ranging from 73% down to 22%.</strong></p></div>
+
+  <h2>What the agent is asked, round by round</h2>
+  <p class="sub" style="margin-top:0">Each round adds new requirements to the same workspace. Click a round to read the exact task the agent was given.</p>
+  <div id="rounds"></div>
+
+  <h2>Per-round test-case results</h2>
+  <div class="keybox">
+    <b>How to read the grid.</b> Every round ships an executable test suite. A cell like <b>43</b>/45&nbsp;<span class="xf">2✗</span>
+    means the model passed <b>43 of the round's 45 test cases</b> and <b>2 failed</b>. The round earns a reward of
+    <b>1 only if every case passes</b> — so a model can pass 43/45 and still score 0 for that round. The case counts
+    show the partial progress the 0/1 round score hides. Cell <b>color = how many cases failed</b> (green = 0).
+    A <b>build&nbsp;✗</b> cell means the model's code did not compile, so the tests could not run (a real 0 — the
+    reference solution builds fine). <b>n/a</b> means that run never reached this round. <b>Click any cell</b> for details below.
+  </div>
+  <div id="heatmap"></div>
+  <div class="legend">cases failed in the cell:
+    <i style="background:#2fae5f"></i>0<i style="background:#8ec74e"></i>1-2<i style="background:#d6c34a"></i>3-5
+    <i style="background:#e89a3c"></i>6-10<i style="background:#e3692f"></i>11-20<i style="background:#d23b34"></i>20+
+    <i style="background:#3a2730"></i>code didn't build<i style="background:#22272f"></i>round not run (n/a)</div>
+  <div id="detail"><span class="ph">Click a cell above to see the round's task and that model's failed requirements.</span></div>
+
+  <h2>Difficulty analysis</h2>
+  <div class='analysis'><p>This task implements the <strong>ml-eval-report-engine</strong> from a written spec: evaluate classification and regression results, compute bootstrap confidence intervals, detect direction-aware regressions, and emit summary/compare subcommands as JSON — 7 rounds, 68 → 78 cumulative cases. The work is spec-driven data transformation, so all 10 models run every round; the chain never aborts, making this a clean capability probe.</p><p>The commonly-failed requirements are the statistical and CLI-surface pieces: <span class='req'>direction-aware-regression</span> (6 models — the verifier expects a labelled direction, e.g. <em>expected='lower-is-better' actual='null'</em>), <span class='req'>compare-exclude-metric</span> (6), <span class='req'>binary-eval</span> (5), <span class='req'>multiclass-eval</span> (5), <span class='req'>regression-eval</span> (5) and <span class='req'>bootstrap-ci</span>. Several misses are whole-subcommand crashes rather than wrong numbers — <span class='req'>summary-subcommand</span> and <span class='req'>summary-json</span> fail with <em>"expected exit=0 actual=2"</em>, i.e. the command errors out entirely.</p></div>
+
+  <h2>Per-model failures (whole task)</h2>
+  <p class="sub" style="margin-top:0">Click a model to expand every requirement it failed across all rounds, with a representative reason from the verifier.</p>
+  <div id="breakdown"></div>
+
+  <h2>Performance gap</h2>
+  <div class='analysis'><p>This task separates sharply at the top. <strong>Opus-4.8 and Kimi-K2.6 each pass 100% of cases on all 7 rounds — perfect scores.</strong> MiniMax-M3 (99%) loses a single round to one ordering detail, <span class='req'>regression-analysis-order</span> (3 cases), landing 6/7. Below them GPT-5.5 (76%, 3/7) and Qwen3.7-Max (92%, 2/7) each fall to one or two subcommands — GPT-5.5 to <span class='req'>summary-json</span>/<span class='req'>compare-exclude-metric</span>, Qwen3.7-Max almost entirely to <span class='req'>direction-aware-regression</span> (29 cases).</p><p>The remaining five models all score <strong>0/7</strong> but spread wide on cases: DeepSeek-V4-Flash holds 73% and GLM-5.1 56%, while DeepSeek-V4-Pro (23%), MiniMax-M2.7 (22%) and Qwen3.6-Plus (30%) fail broadly across <span class='req'>binary-eval</span>, <span class='req'>bootstrap-ci</span>, <span class='req'>multiclass-eval</span> and <span class='req'>summary-subcommand</span> — the core evaluators themselves crash. The binary round reward flattens DeepSeek-V4-Flash's genuine 73% into the same 0/7 as MiniMax-M2.7's 22%, hiding a real three-fold difference in working capability.</p></div>
+
+  <p class="foot">Test-case data extracted from the verifier <code>CASE_RESULT</code> logs of each model's run.
+    Reasons are the verifier's own <code>failure_reason</code> (back-filled from expected/actual when terse).</p>
+</div>
+
+<script src="../assets/site.js"></script>
+<script>
+fetch("../data/tasks/theme_d10_w12_ml_ai_mlops_explanation_reporting.json").then(function(r){return r.json();}).then(function(T){
+  window.__MODELS__ = Object.keys(T.models);
+  var detail = document.getElementById("detail");
+  EvoViz.renderRounds(document.getElementById("rounds"), T);
+  EvoViz.renderHeatmap(document.getElementById("heatmap"), T, function(model, round){
+    EvoViz.renderDetail(detail, T, model, round);
+    detail.scrollIntoView({behavior:"smooth", block:"nearest"});
+  });
+  EvoViz.renderBreakdown(document.getElementById("breakdown"), T);
+});
+</script>
+</body></html>

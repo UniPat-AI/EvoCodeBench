@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>mlpipe-dag-orchestrator — EvoCode-Bench</title>
+<link rel="stylesheet" href="../assets/site.css">
+</head><body>
+<div class="wrap">
+  <header class="top">
+    <h1>mlpipe-dag-orchestrator</h1>
+    <span class="crumb"><a href="../index.html">← all tasks</a></span>
+  </header>
+  <p class="sub">
+    <span class="pill hard">hard</span>
+    <span class="pill">mlops automation</span>
+    <span class="pill">7 rounds</span>
+    <span class="pill">theme_d10_w11_ml_ai_mlops_automation_scripting</span><br>
+    I need a Go CLI tool called `mlpipe` for orchestrating ML experiment pipelines. Check out the existing project structure — there are pipeline definition YAML files in `pipelines/` and simulated stage 
+  </p>
+
+  <div class='analysis'><p style='margin:0'><strong>One requirement — emitting run artifacts — defeats 9 of 10 models, dragging Opus-4.8 and GPT-5.5 to 0/7 rounds despite a near-flawless 97% case pass.</strong></p></div>
+
+  <h2>What the agent is asked, round by round</h2>
+  <p class="sub" style="margin-top:0">Each round adds new requirements to the same workspace. Click a round to read the exact task the agent was given.</p>
+  <div id="rounds"></div>
+
+  <h2>Per-round test-case results</h2>
+  <div class="keybox">
+    <b>How to read the grid.</b> Every round ships an executable test suite. A cell like <b>43</b>/45&nbsp;<span class="xf">2✗</span>
+    means the model passed <b>43 of the round's 45 test cases</b> and <b>2 failed</b>. The round earns a reward of
+    <b>1 only if every case passes</b> — so a model can pass 43/45 and still score 0 for that round. The case counts
+    show the partial progress the 0/1 round score hides. Cell <b>color = how many cases failed</b> (green = 0).
+    A <b>build&nbsp;✗</b> cell means the model's code did not compile, so the tests could not run (a real 0 — the
+    reference solution builds fine). <b>n/a</b> means that run never reached this round. <b>Click any cell</b> for details below.
+  </div>
+  <div id="heatmap"></div>
+  <div class="legend">cases failed in the cell:
+    <i style="background:#2fae5f"></i>0<i style="background:#8ec74e"></i>1-2<i style="background:#d6c34a"></i>3-5
+    <i style="background:#e89a3c"></i>6-10<i style="background:#e3692f"></i>11-20<i style="background:#d23b34"></i>20+
+    <i style="background:#3a2730"></i>code didn't build<i style="background:#22272f"></i>round not run (n/a)</div>
+  <div id="detail"><span class="ph">Click a cell above to see the round's task and that model's failed requirements.</span></div>
+
+  <h2>Difficulty analysis</h2>
+  <div class='analysis'><p>This task builds <strong>mlpipe</strong>, a Go CLI for orchestrating ML experiment pipelines: plan a DAG, run stages, sweep hyperparameters, compare and report results, and export to JSON/CSV — 7 rounds, 68 → 427 cumulative test cases. Because the round reward is all-or-nothing across every active requirement, a single missing feature zeros the round even when nearly everything else passes.</p><p>The load-bearing failure is <span class='req'>artifacts</span>, missed by 9 of 10 models: the verifier expects each run to record produced files and the implementations leave the list empty (<em>"artifacts: list has entries (got )"</em>). The other shared misses are <span class='req'>export-json</span> (7 models — e.g. <em>"export: json num_samples_norm is null (got 0.5)"</em>), <span class='req'>sweep-validate</span> (6 — <em>"sweep: invalid metric error message"</em>), <span class='req'>run-params</span>, <span class='req'>report-only</span> and <span class='req'>export-sort</span>. These are output-plumbing and validation details layered on top of an otherwise working orchestrator.</p></div>
+
+  <h2>Per-model failures (whole task)</h2>
+  <p class="sub" style="margin-top:0">Click a model to expand every requirement it failed across all rounds, with a representative reason from the verifier.</p>
+  <div id="breakdown"></div>
+
+  <h2>Performance gap</h2>
+  <div class='analysis'><p>The strong tier runs the whole pipeline and loses almost nothing else. <strong>Opus-4.8 and GPT-5.5 sit at 97% case pass</strong> yet score 0/7 — Opus's only listed miss is <span class='req'>artifacts</span> (28 cases), GPT-5.5 adds <span class='req'>sweep-validate</span> (10). MiniMax-M3 (90%) trails slightly with <span class='req'>run-metrics</span>, <span class='req'>compare-weighted</span> and <span class='req'>export-json</span> failures on top of artifacts. Kimi-K2.6 actually clears 2/7 rounds at 95% — the only model to pass any — but hits 2 build✗ rounds where its own code failed to compile.</p><p>The weak tier fails a broader, more basic layer. Qwen3.7-Max (37%) and MiniMax-M2.7 (40%) lose <span class='req'>plan-order</span>, <span class='req'>plan-grid</span> and <span class='req'>run-diamond</span> — the DAG planning and diamond-dependency execution itself — while GLM-5.1 collapses to 12% with 3 build✗ rounds and broad <span class='req'>report</span>/<span class='req'>plan</span> failures. DeepSeek-V4-Flash (29%) and the two 62% Qwen/DeepSeek-Pro models round out the spread. So the gap is layered: strong models implement the orchestrator and lose only artifact/export edge contracts, while weak models never get the planning and execution core working.</p></div>
+
+  <p class="foot">Test-case data extracted from the verifier <code>CASE_RESULT</code> logs of each model's run.
+    Reasons are the verifier's own <code>failure_reason</code> (back-filled from expected/actual when terse).</p>
+</div>
+
+<script src="../assets/site.js"></script>
+<script>
+fetch("../data/tasks/theme_d10_w11_ml_ai_mlops_automation_scripting.json").then(function(r){return r.json();}).then(function(T){
+  window.__MODELS__ = Object.keys(T.models);
+  var detail = document.getElementById("detail");
+  EvoViz.renderRounds(document.getElementById("rounds"), T);
+  EvoViz.renderHeatmap(document.getElementById("heatmap"), T, function(model, round){
+    EvoViz.renderDetail(detail, T, model, round);
+    detail.scrollIntoView({behavior:"smooth", block:"nearest"});
+  });
+  EvoViz.renderBreakdown(document.getElementById("breakdown"), T);
+});
+</script>
+</body></html>

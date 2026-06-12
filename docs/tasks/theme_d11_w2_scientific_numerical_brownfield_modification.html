@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>sparse-iterative-pde-solver — EvoCode-Bench</title>
+<link rel="stylesheet" href="../assets/site.css">
+</head><body>
+<div class="wrap">
+  <header class="top">
+    <h1>sparse-iterative-pde-solver</h1>
+    <span class="crumb"><a href="../index.html">← all tasks</a></span>
+  </header>
+  <p class="sub">
+    <span class="pill hard">hard</span>
+    <span class="pill">scientific numerical</span>
+    <span class="pill">7 rounds</span>
+    <span class="pill">theme_d11_w2_scientific_numerical_brownfield_modification</span><br>
+    We need to extend numsim with full sparse matrix support, iterative Krylov solvers with preconditioning, and a 2D Poisson equation solver that exercises all of these together. The current codebase onl
+  </p>
+
+  <div class='analysis'><p style='margin:0'><strong>Opus-4.8 solves the PDE solver perfectly (7/7) and Kimi-K2.6 nearly so (6/7, 99%), but the field then splits violently — case pass ranges from 93% down to 44% as weaker models&#x27; solvers crash with exit code 1.</strong></p></div>
+
+  <h2>What the agent is asked, round by round</h2>
+  <p class="sub" style="margin-top:0">Each round adds new requirements to the same workspace. Click a round to read the exact task the agent was given.</p>
+  <div id="rounds"></div>
+
+  <h2>Per-round test-case results</h2>
+  <div class="keybox">
+    <b>How to read the grid.</b> Every round ships an executable test suite. A cell like <b>43</b>/45&nbsp;<span class="xf">2✗</span>
+    means the model passed <b>43 of the round's 45 test cases</b> and <b>2 failed</b>. The round earns a reward of
+    <b>1 only if every case passes</b> — so a model can pass 43/45 and still score 0 for that round. The case counts
+    show the partial progress the 0/1 round score hides. Cell <b>color = how many cases failed</b> (green = 0).
+    A <b>build&nbsp;✗</b> cell means the model's code did not compile, so the tests could not run (a real 0 — the
+    reference solution builds fine). <b>n/a</b> means that run never reached this round. <b>Click any cell</b> for details below.
+  </div>
+  <div id="heatmap"></div>
+  <div class="legend">cases failed in the cell:
+    <i style="background:#2fae5f"></i>0<i style="background:#8ec74e"></i>1-2<i style="background:#d6c34a"></i>3-5
+    <i style="background:#e89a3c"></i>6-10<i style="background:#e3692f"></i>11-20<i style="background:#d23b34"></i>20+
+    <i style="background:#3a2730"></i>code didn't build<i style="background:#22272f"></i>round not run (n/a)</div>
+  <div id="detail"><span class="ph">Click a cell above to see the round's task and that model's failed requirements.</span></div>
+
+  <h2>Difficulty analysis</h2>
+  <div class='analysis'><p>This is a <strong>brownfield</strong> scientific task: extend the existing <em>numsim</em> library with full sparse-matrix support, iterative Krylov solvers (CG, GMRES) with preconditioning, and a 2D Poisson solver that exercises all of it, across 7 rounds. The agent must respect numsim's existing matrix and history-output contracts rather than write fresh code.</p><p>The hardest commonly-failed requirements are <span class='req'>poisson-mixed-bc</span> (9/10 models) and <span class='req'>ssor-omega-validation</span> (7/10) — mixed-boundary Poisson and the SSOR omega-parameter validation. The history/reporting contracts also bite many: <span class='req'>history-format</span>, <span class='req'>history-precond-col</span> and <span class='req'>convdiff-history</span> (6 each), where the iteration log must emit the exact tab-separated columns. For the weaker models the failures are not subtle formatting misses but outright crashes — <span class='req'>heat-backward-euler</span>, <span class='req'>convdiff-solver</span> and <span class='req'>cg-solver</span> cases return <em>"exit code 1"</em> where the reference produces a converged solution, meaning the solver itself is broken.</p></div>
+
+  <h2>Per-model failures (whole task)</h2>
+  <p class="sub" style="margin-top:0">Click a model to expand every requirement it failed across all rounds, with a representative reason from the verifier.</p>
+  <div id="breakdown"></div>
+
+  <h2>Performance gap</h2>
+  <div class='analysis'><p>The top tier is genuinely excellent. <strong>Opus-4.8 passes 7/7 rounds at 100%</strong>, and <strong>Kimi-K2.6 takes 6/7 at 99%</strong>, losing only a single <span class='req'>poisson-mixed-bc</span> case. Just below, GPT-5.5 and GLM-5.1 each clear 2/7 (83% / 84%) but lose the eigenvalue suite — <span class='req'>eig-power</span>, <span class='req'>eigenvector-output</span>, <span class='req'>eig-shifted-inverse</span> all returning <em>"exit code 1"</em> — and DeepSeek-V4-Pro lands 1/7 at a high 93%, missing mostly <span class='req'>history-format</span> and <span class='req'>convdiff-solver</span>.</p><p>Below them the implementations fall apart structurally. Qwen3.6-Plus is the anomaly: <strong>0/7 rounds but 97% case pass</strong>, a nearly-complete solver undone only by <span class='req'>ssor-omega-validation</span> (6) and <span class='req'>precond-ssor</span> (2). By contrast the genuinely weak models crash on core solvers — MiniMax-M3 (61%), MiniMax-M2.7 (70%) and DeepSeek-V4-Flash (73%) sink dozens of cases into <span class='req'>heat-backward-euler</span> and <span class='req'>convdiff-solver</span>, and Qwen3.7-Max (44%) fails even the basics, <span class='req'>matvec</span> (22) and <span class='req'>cg-solver</span> (15). The separator here is whether the iterative solvers run at all, not whether the reporting is pixel-perfect.</p></div>
+
+  <p class="foot">Test-case data extracted from the verifier <code>CASE_RESULT</code> logs of each model's run.
+    Reasons are the verifier's own <code>failure_reason</code> (back-filled from expected/actual when terse).</p>
+</div>
+
+<script src="../assets/site.js"></script>
+<script>
+fetch("../data/tasks/theme_d11_w2_scientific_numerical_brownfield_modification.json").then(function(r){return r.json();}).then(function(T){
+  window.__MODELS__ = Object.keys(T.models);
+  var detail = document.getElementById("detail");
+  EvoViz.renderRounds(document.getElementById("rounds"), T);
+  EvoViz.renderHeatmap(document.getElementById("heatmap"), T, function(model, round){
+    EvoViz.renderDetail(detail, T, model, round);
+    detail.scrollIntoView({behavior:"smooth", block:"nearest"});
+  });
+  EvoViz.renderBreakdown(document.getElementById("breakdown"), T);
+});
+</script>
+</body></html>

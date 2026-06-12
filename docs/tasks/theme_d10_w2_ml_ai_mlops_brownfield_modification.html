@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>nexus-ml-pipeline-system — EvoCode-Bench</title>
+<link rel="stylesheet" href="../assets/site.css">
+</head><body>
+<div class="wrap">
+  <header class="top">
+    <h1>nexus-ml-pipeline-system</h1>
+    <span class="crumb"><a href="../index.html">← all tasks</a></span>
+  </header>
+  <p class="sub">
+    <span class="pill hard">hard</span>
+    <span class="pill">ml ops pipeline</span>
+    <span class="pill">8 rounds</span>
+    <span class="pill">theme_d10_w2_ml_ai_mlops_brownfield_modification</span><br>
+    Nexus needs a pipeline engine. Right now it tracks models and experiments individually, but we need it to manage complete ML workflows as directed acyclic graphs of steps that produce and consume type
+  </p>
+
+  <div class='analysis'><p style='margin:0'><strong>A brownfield DAG-pipeline extension where a core set of features defeats all 10 models — variable resolution, step environment, retry history and train integration fail for every model — while case pass spreads widest in the suite (26–80%).</strong></p></div>
+
+  <h2>What the agent is asked, round by round</h2>
+  <p class="sub" style="margin-top:0">Each round adds new requirements to the same workspace. Click a round to read the exact task the agent was given.</p>
+  <div id="rounds"></div>
+
+  <h2>Per-round test-case results</h2>
+  <div class="keybox">
+    <b>How to read the grid.</b> Every round ships an executable test suite. A cell like <b>43</b>/45&nbsp;<span class="xf">2✗</span>
+    means the model passed <b>43 of the round's 45 test cases</b> and <b>2 failed</b>. The round earns a reward of
+    <b>1 only if every case passes</b> — so a model can pass 43/45 and still score 0 for that round. The case counts
+    show the partial progress the 0/1 round score hides. Cell <b>color = how many cases failed</b> (green = 0).
+    A <b>build&nbsp;✗</b> cell means the model's code did not compile, so the tests could not run (a real 0 — the
+    reference solution builds fine). <b>n/a</b> means that run never reached this round. <b>Click any cell</b> for details below.
+  </div>
+  <div id="heatmap"></div>
+  <div class="legend">cases failed in the cell:
+    <i style="background:#2fae5f"></i>0<i style="background:#8ec74e"></i>1-2<i style="background:#d6c34a"></i>3-5
+    <i style="background:#e89a3c"></i>6-10<i style="background:#e3692f"></i>11-20<i style="background:#d23b34"></i>20+
+    <i style="background:#3a2730"></i>code didn't build<i style="background:#22272f"></i>round not run (n/a)</div>
+  <div id="detail"><span class="ph">Click a cell above to see the round's task and that model's failed requirements.</span></div>
+
+  <h2>Difficulty analysis</h2>
+  <div class='analysis'><p>This is a <strong>brownfield</strong> task: extend the existing <em>nexus-ml-pipeline</em> engine so it runs complete DAG workflows (steps with dependencies, conditions, retries, captured output, artifacts), 8 rounds, 32 → ~75 cumulative cases. Brownfield is harder than greenfield because the agent must respect the existing code's contracts, not just write fresh code.</p><p>What makes this task stand out is a <strong>universal core of failures</strong> — requirements missed by all 10 models: <span class='req'>variable-defaults</span>, <span class='req'>step-env</span>, <span class='req'>unresolved-var</span> and <span class='req'>retry-history</span> (10/10), plus <span class='req'>train-integration</span>, <span class='req'>execution-timeout</span>, <span class='req'>evaluate-step</span> and <span class='req'>artifacts</span> (9/10). The failure reasons pinpoint the contract gaps: variable substitution producing empty output (<em>"status:succeeded out="</em>), the train step not registering a tracked experiment (<em>"no experiment_id"</em>), retry metadata fields missing (<em>"len= att= err="</em>), and errors swallowed instead of surfaced (<em>"status: error="</em>). These are precise interface details that even the strongest models miss.</p></div>
+
+  <h2>Per-model failures (whole task)</h2>
+  <p class="sub" style="margin-top:0">Click a model to expand every requirement it failed across all rounds, with a representative reason from the verifier.</p>
+  <div id="breakdown"></div>
+
+  <h2>Performance gap</h2>
+  <div class='analysis'><p>Two clusters, with the <strong>widest case spread of any task</strong>. The strong cluster — <strong>Opus-4.8, GPT-5.5, MiniMax-M3 at 76–80% case pass</strong> — implements the pipeline structure and only loses the subtle variable-resolution and retry-history semantics above. The weak cluster falls steeply: Kimi-K2.6 55%, DeepSeek-V4-Pro 49%, GLM-5.1 40%, DeepSeek-V4-Flash 36%, Qwen3.7-Max 32%, MiniMax-M2.7 26%.</p><p>The weak models fail on a <em>different, more basic</em> layer — <span class='req'>allow-failure</span>, <span class='req'>capture-output</span>, <span class='req'>dry-run</span>, <span class='req'>condition-logic</span> and <span class='req'>step-status-ref</span> — i.e. the control-flow and output-plumbing of the DAG itself, not just the fine-grained variable semantics. So the gap is layered: strong models get the plumbing and lose only the edge-case contracts; weak models never get the plumbing working. MiniMax-M2.7 also aborts the chain after round 2, the only model that fails to run to completion here.</p></div>
+
+  <p class="foot">Test-case data extracted from the verifier <code>CASE_RESULT</code> logs of each model's run.
+    Reasons are the verifier's own <code>failure_reason</code> (back-filled from expected/actual when terse).</p>
+</div>
+
+<script src="../assets/site.js"></script>
+<script>
+fetch("../data/tasks/theme_d10_w2_ml_ai_mlops_brownfield_modification.json").then(function(r){return r.json();}).then(function(T){
+  window.__MODELS__ = Object.keys(T.models);
+  var detail = document.getElementById("detail");
+  EvoViz.renderRounds(document.getElementById("rounds"), T);
+  EvoViz.renderHeatmap(document.getElementById("heatmap"), T, function(model, round){
+    EvoViz.renderDetail(detail, T, model, round);
+    detail.scrollIntoView({behavior:"smooth", block:"nearest"});
+  });
+  EvoViz.renderBreakdown(document.getElementById("breakdown"), T);
+});
+</script>
+</body></html>

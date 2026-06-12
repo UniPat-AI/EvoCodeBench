@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>hermetic-build-artifact-verifier — EvoCode-Bench</title>
+<link rel="stylesheet" href="../assets/site.css">
+</head><body>
+<div class="wrap">
+  <header class="top">
+    <h1>hermetic-build-artifact-verifier</h1>
+    <span class="crumb"><a href="../index.html">← all tasks</a></span>
+  </header>
+  <p class="sub">
+    <span class="pill hard">hard</span>
+    <span class="pill">code build reproducibility</span>
+    <span class="pill">7 rounds</span>
+    <span class="pill">theme_d1_w9_code_build_reproducibility_verification</span><br>
+    I need a deterministic build artifact verification tool called `buildvault` written in Go (the project skeleton with `go.mod` is already in `/app/`). This tool orchestrates compilation of multiple bui
+  </p>
+
+  <div class='analysis'><p style='margin:0'><strong>Opus-4.8 nails the deterministic build verifier perfectly (7/7, 100% cases) while one feature — build hooks — defeats nine of the other models, and case pass quietly spans 46% to 93% beneath a row of zero-round scores.</strong></p></div>
+
+  <h2>What the agent is asked, round by round</h2>
+  <p class="sub" style="margin-top:0">Each round adds new requirements to the same workspace. Click a round to read the exact task the agent was given.</p>
+  <div id="rounds"></div>
+
+  <h2>Per-round test-case results</h2>
+  <div class="keybox">
+    <b>How to read the grid.</b> Every round ships an executable test suite. A cell like <b>43</b>/45&nbsp;<span class="xf">2✗</span>
+    means the model passed <b>43 of the round's 45 test cases</b> and <b>2 failed</b>. The round earns a reward of
+    <b>1 only if every case passes</b> — so a model can pass 43/45 and still score 0 for that round. The case counts
+    show the partial progress the 0/1 round score hides. Cell <b>color = how many cases failed</b> (green = 0).
+    A <b>build&nbsp;✗</b> cell means the model's code did not compile, so the tests could not run (a real 0 — the
+    reference solution builds fine). <b>n/a</b> means that run never reached this round. <b>Click any cell</b> for details below.
+  </div>
+  <div id="heatmap"></div>
+  <div class="legend">cases failed in the cell:
+    <i style="background:#2fae5f"></i>0<i style="background:#8ec74e"></i>1-2<i style="background:#d6c34a"></i>3-5
+    <i style="background:#e89a3c"></i>6-10<i style="background:#e3692f"></i>11-20<i style="background:#d23b34"></i>20+
+    <i style="background:#3a2730"></i>code didn't build<i style="background:#22272f"></i>round not run (n/a)</div>
+  <div id="detail"><span class="ph">Click a cell above to see the round's task and that model's failed requirements.</span></div>
+
+  <h2>Difficulty analysis</h2>
+  <div class='analysis'><p>This task builds <code>buildvault</code>, a deterministic build-artifact verification tool in Go (a skeleton with <code>go.mod</code> is provided): it must produce reproducible content hashes, lock dependencies, verify rebuilds match, run selective builds over a dependency closure, and maintain a tamper-evident audit chain. 7 rounds. <strong>Reproducibility</strong> is the theme, so the bar is exactness — byte-identical hashes, stable lockfiles, chained hashes that validate.</p><p>The single dominant obstacle is <span class='req'>hooks</span> (failed by 9 of 10 models), along with <span class='req'>hooks-changed</span>, <span class='req'>hooks-fingerprint</span> and <span class='req'>hooks-lockfile</span> — the hook system that runs commands around builds and folds their state into the fingerprint. The reasons are blunt: <span class='req'>hooks</span> reports <em>"marker file not found"</em> (the hook never executed), <span class='req'>verify-rebuild</span> emits empty <em>"cached_hash= fresh_hash="</em> fields, <span class='req'>audit-chain</span> returns <em>"got 0 chars"</em> where a 64-char chain hash was required, <span class='req'>lock-cmd</span> exits 1, and <span class='req'>constraints</span> exits 0 where exit 1 was expected. <span class='req'>selective-build</span> and <span class='req'>check-change-reasons</span> round out the shared misses.</p></div>
+
+  <h2>Per-model failures (whole task)</h2>
+  <p class="sub" style="margin-top:0">Click a model to expand every requirement it failed across all rounds, with a representative reason from the verifier.</p>
+  <div id="breakdown"></div>
+
+  <h2>Performance gap</h2>
+  <div class='analysis'><p><strong>Opus-4.8 solves it outright: 7/7 rounds, 100% case pass</strong> — the only model to produce a clean run. Kimi-K2.6 is a strong second at 5/7 (93%), losing mainly to <span class='req'>hooks</span> (30 cases) and the export commands. GPT-5.5 and Qwen3.7-Max manage 2/7 (72% / 83%).</p><p>The remaining six models all score 1/7 or <strong>0/7 rounds</strong>, but case pass shows real stratification rather than uniform failure: Qwen3.6-Plus and GLM-5.1 still clear 84% / 82% of cases (one passing round, then blocked by hooks), while MiniMax-M3, DeepSeek-V4-Pro and DeepSeek-V4-Flash sit near 46-49% — the lock-cmd/verify-rebuild/hooks stack failing wholesale. The discriminator is narrow and specific: nearly every non-Opus model implements the core verifier but cannot get the hook subsystem to execute and fold into the fingerprint, and that one missing piece caps the round score regardless of how much else works.</p></div>
+
+  <p class="foot">Test-case data extracted from the verifier <code>CASE_RESULT</code> logs of each model's run.
+    Reasons are the verifier's own <code>failure_reason</code> (back-filled from expected/actual when terse).</p>
+</div>
+
+<script src="../assets/site.js"></script>
+<script>
+fetch("../data/tasks/theme_d1_w9_code_build_reproducibility_verification.json").then(function(r){return r.json();}).then(function(T){
+  window.__MODELS__ = Object.keys(T.models);
+  var detail = document.getElementById("detail");
+  EvoViz.renderRounds(document.getElementById("rounds"), T);
+  EvoViz.renderHeatmap(document.getElementById("heatmap"), T, function(model, round){
+    EvoViz.renderDetail(detail, T, model, round);
+    detail.scrollIntoView({behavior:"smooth", block:"nearest"});
+  });
+  EvoViz.renderBreakdown(document.getElementById("breakdown"), T);
+});
+</script>
+</body></html>

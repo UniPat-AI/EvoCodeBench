@@ -12,3 +12,7 @@ __pycache__/
 .venv/
 *.tar
 
+
+# results site data (per-task case JSON + analysis) is published, unlike the dataset under data/
+!docs/data/
+!docs/data/**

@@ -236,21 +236,32 @@ full 5–15 round chains, **one attempt per task** (no best-of-k). The score is 
 task's `passed_steps / total_steps`. All cells are from complete chains; `oracle`
 scores 1.0 and `nop` scores 0 on every task.
 
-| Agent | Dataset score | Perfect tasks |
-|:--|--:|--:|
-| Claude-Opus-4.8 (xhigh) | 40.9 | 6/26 |
-| GPT-5.5 | 23.5 | 0/26 |
-| Kimi-K2.6 | 23.1 | 1/26 |
-| MiniMax-M3 | 15.2 | 1/26 |
-| DeepSeek-V4-Pro | 10.8 | 0/26 |
-| Qwen3.6-Plus | 10.1 | 1/26 |
-| GLM-5.1 | 8.5 | 0/26 |
-| Qwen3.7-Max | 7.6 | 0/26 |
-| DeepSeek-V4-Flash | 7.4 | 0/26 |
-| MiniMax-M2.7 | 3.6 | 0/26 |
+| Agent | Reasoning | Dataset score | Perfect tasks |
+|:--|:--|--:|--:|
+| Claude-Opus-4.8 | effort `xhigh` | 40.9 | 6/26 |
+| GPT-5.5 | effort `high` | 23.5 | 0/26 |
+| Kimi-K2.6 | thinking on¹ | 23.1 | 1/26 |
+| MiniMax-M3 | thinking `adaptive` | 15.2 | 1/26 |
+| DeepSeek-V4-Pro | effort `high` | 10.8 | 0/26 |
+| Qwen3.6-Plus | thinking on¹ | 10.1 | 1/26 |
+| GLM-5.1 | thinking on¹ | 8.5 | 0/26 |
+| Qwen3.7-Max | thinking on¹ | 7.6 | 0/26 |
+| DeepSeek-V4-Flash | effort `high` | 7.4 | 0/26 |
+| MiniMax-M2.7 | reasoning split | 3.6 | 0/26 |
 
-*Dataset score* is the mean per-task score ×100 (= mean per-step reward).
+*Dataset score* is the mean per-task score ×100 (= mean per-step reward). *Reasoning*
+is the thinking configuration used for each model: models with an effort knob ran at the
+listed level (Opus at its highest, `xhigh`; the rest at `high`); ¹ models without an
+effort knob ran with their native thinking simply enabled (Qwen `enable_thinking`,
+GLM/Kimi `thinking.type=enabled`), and MiniMax M3/M2.7 used their adaptive / split
+reasoning modes. All agents used the `terminus-2` scaffold.
 Per-task / per-round detail: [`evaluation/sweeps/sweep_2026-06_single_shot.csv`](evaluation/sweeps/sweep_2026-06_single_shot.csv).
+
+**Explore the results interactively → [unipat-ai.github.io/EvoCodeBench](https://unipat-ai.github.io/EvoCodeBench/)** —
+one page per task with a per-round × per-model test-case heatmap, drill-down into the exact
+cases each model failed (intent / expected / actual / reason), and a written difficulty and
+performance-gap analysis. The same pages are under [`docs/`](docs/) and render locally with any
+static server (`python3 -m http.server` from `docs/`).
 
 > The original paper results (MT@4 / SR / Comp, legacy runner) are in [`legacy/`](legacy/README.md).
 

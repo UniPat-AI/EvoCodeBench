@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>buildctl-pipeline-orchestrator — EvoCode-Bench</title>
+<link rel="stylesheet" href="../assets/site.css">
+</head><body>
+<div class="wrap">
+  <header class="top">
+    <h1>buildctl-pipeline-orchestrator</h1>
+    <span class="crumb"><a href="../index.html">← all tasks</a></span>
+  </header>
+  <p class="sub">
+    <span class="pill hard">hard</span>
+    <span class="pill">build system integration</span>
+    <span class="pill">8 rounds</span>
+    <span class="pill">theme_d1_w5_code_build_integration_e2e_wiring</span><br>
+    Build a CLI tool called `buildctl` in Go that orchestrates multi-target build pipelines with dependency resolution, parallel execution, and content-addressable artifact caching.
+  </p>
+
+  <div class='analysis'><p style='margin:0'><strong>A build-pipeline orchestrator that flattens the whole field — no model clears more than 2 of 8 rounds — yet Opus-4.8 and GPT-5.5 pass 95% of cases at 1/8, undone almost entirely by one feature: import resolution.</strong></p></div>
+
+  <h2>What the agent is asked, round by round</h2>
+  <p class="sub" style="margin-top:0">Each round adds new requirements to the same workspace. Click a round to read the exact task the agent was given.</p>
+  <div id="rounds"></div>
+
+  <h2>Per-round test-case results</h2>
+  <div class="keybox">
+    <b>How to read the grid.</b> Every round ships an executable test suite. A cell like <b>43</b>/45&nbsp;<span class="xf">2✗</span>
+    means the model passed <b>43 of the round's 45 test cases</b> and <b>2 failed</b>. The round earns a reward of
+    <b>1 only if every case passes</b> — so a model can pass 43/45 and still score 0 for that round. The case counts
+    show the partial progress the 0/1 round score hides. Cell <b>color = how many cases failed</b> (green = 0).
+    A <b>build&nbsp;✗</b> cell means the model's code did not compile, so the tests could not run (a real 0 — the
+    reference solution builds fine). <b>n/a</b> means that run never reached this round. <b>Click any cell</b> for details below.
+  </div>
+  <div id="heatmap"></div>
+  <div class="legend">cases failed in the cell:
+    <i style="background:#2fae5f"></i>0<i style="background:#8ec74e"></i>1-2<i style="background:#d6c34a"></i>3-5
+    <i style="background:#e89a3c"></i>6-10<i style="background:#e3692f"></i>11-20<i style="background:#d23b34"></i>20+
+    <i style="background:#3a2730"></i>code didn't build<i style="background:#22272f"></i>round not run (n/a)</div>
+  <div id="detail"><span class="ph">Click a cell above to see the round's task and that model's failed requirements.</span></div>
+
+  <h2>Difficulty analysis</h2>
+  <div class='analysis'><p>This task wires up <code>buildctl</code>, a Go CLI that orchestrates multi-target build pipelines: dependency resolution, parallel execution, caching, hooks, variable substitution and config imports. 8 rounds. As an <strong>integration / e2e-wiring</strong> task, the difficulty is making independently-correct pieces work together — affected-set computation feeding the planner, hooks chaining in order, variables resolving with the right precedence across imported files.</p><p>The hardest commonly-failed area is <strong>incremental dependency analysis</strong>: <span class='req'>deps-affected</span> and <span class='req'>deps-affected-plan</span> top the fail lists with enormous case counts (108 and 139 for DeepSeek-V4-Pro), usually as a hard error — <em>"expected exit=0, got exit=1"</em> — meaning the subcommand crashes rather than computes the wrong set. The wiring-specific misses are equally telling: <span class='req'>hook-chain</span> running <em>"main"</em> before <em>"pre1"</em> (hooks fire in the wrong order), <span class='req'>imports-transitive</span> returning <em>"top"</em> instead of <em>"foundation"</em> (transitive imports not followed), <span class='req'>profile-critical-path</span> returning an empty path where it should exclude a failed target, and <span class='req'>cache-key-fix</span> producing empty keys (<em>"a= b="</em>). The shared core <span class='req'>profile-critical-path</span>, <span class='req'>cache-key-fix</span>, <span class='req'>fail-fast</span> and the retry-hook requirements are missed by 8-9 of 10 models.</p></div>
+
+  <h2>Per-model failures (whole task)</h2>
+  <p class="sub" style="margin-top:0">Click a model to expand every requirement it failed across all rounds, with a representative reason from the verifier.</p>
+  <div id="breakdown"></div>
+
+  <h2>Performance gap</h2>
+  <div class='analysis'><p>This task is a <strong>great leveller</strong> — the ceiling is just 2/8 rounds, shared by MiniMax-M3, DeepSeek-V4-Pro and Qwen3.6-Plus. But round score badly misranks capability here: <strong>Opus-4.8 and GPT-5.5 sit at only 1/8 rounds yet pass 95% of cases</strong>, with their losses concentrated almost entirely in one cluster — <span class='req'>imports</span>, <span class='req'>imports-transitive</span>, <span class='req'>variables-importpath</span> and <span class='req'>variables-precedence</span>. They build a near-complete orchestrator and miss a clean round only because import/variable resolution is off.</p><p>The genuinely weak models fail far more broadly and at the structural level: Kimi-K2.6 (83%), DeepSeek-V4-Flash (71%), GLM-5.1 (67%) and MiniMax-M2.7 (66%) drown in <span class='req'>deps-affected-plan</span>/<span class='req'>deps-affected</span> crashes (100+ cases each). <strong>Four models hit build✗</strong> at least one round (MiniMax-M3, DeepSeek-V4-Pro, DeepSeek-V4-Flash, GLM-5.1) — their own code failing to compile, not a task defect. So the real divide is Opus/GPT-5.5 (everything works but imports) vs. the rest (the affected-set engine never runs), even though the round table compresses both into the same 1-2 band.</p></div>
+
+  <p class="foot">Test-case data extracted from the verifier <code>CASE_RESULT</code> logs of each model's run.
+    Reasons are the verifier's own <code>failure_reason</code> (back-filled from expected/actual when terse).</p>
+</div>
+
+<script src="../assets/site.js"></script>
+<script>
+fetch("../data/tasks/theme_d1_w5_code_build_integration_e2e_wiring.json").then(function(r){return r.json();}).then(function(T){
+  window.__MODELS__ = Object.keys(T.models);
+  var detail = document.getElementById("detail");
+  EvoViz.renderRounds(document.getElementById("rounds"), T);
+  EvoViz.renderHeatmap(document.getElementById("heatmap"), T, function(model, round){
+    EvoViz.renderDetail(detail, T, model, round);
+    detail.scrollIntoView({behavior:"smooth", block:"nearest"});
+  });
+  EvoViz.renderBreakdown(document.getElementById("breakdown"), T);
+});
+</script>
+</body></html>

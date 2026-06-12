@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>secaudit-log-sentinel — EvoCode-Bench</title>
+<link rel="stylesheet" href="../assets/site.css">
+</head><body>
+<div class="wrap">
+  <header class="top">
+    <h1>secaudit-log-sentinel</h1>
+    <span class="crumb"><a href="../index.html">← all tasks</a></span>
+  </header>
+  <p class="sub">
+    <span class="pill hard">hard</span>
+    <span class="pill">security automation</span>
+    <span class="pill">15 rounds</span>
+    <span class="pill">theme_d9_w11_security_automation_scripting</span><br>
+    Build a security log analysis and automated threat-response CLI tool called `secsentinel` in Go. The tool processes structured security event logs and performs multi-layered threat detection with corr
+  </p>
+
+  <div class='analysis'><p style='margin:0'><strong>The widest round-level spread in the suite: Opus-4.8 nails all 15 rounds and Qwen3.7-Max 12/15 at 100% cases, while most models stall at 1–5 rounds despite passing 56–82% of cases.</strong></p></div>
+
+  <h2>What the agent is asked, round by round</h2>
+  <p class="sub" style="margin-top:0">Each round adds new requirements to the same workspace. Click a round to read the exact task the agent was given.</p>
+  <div id="rounds"></div>
+
+  <h2>Per-round test-case results</h2>
+  <div class="keybox">
+    <b>How to read the grid.</b> Every round ships an executable test suite. A cell like <b>43</b>/45&nbsp;<span class="xf">2✗</span>
+    means the model passed <b>43 of the round's 45 test cases</b> and <b>2 failed</b>. The round earns a reward of
+    <b>1 only if every case passes</b> — so a model can pass 43/45 and still score 0 for that round. The case counts
+    show the partial progress the 0/1 round score hides. Cell <b>color = how many cases failed</b> (green = 0).
+    A <b>build&nbsp;✗</b> cell means the model's code did not compile, so the tests could not run (a real 0 — the
+    reference solution builds fine). <b>n/a</b> means that run never reached this round. <b>Click any cell</b> for details below.
+  </div>
+  <div id="heatmap"></div>
+  <div class="legend">cases failed in the cell:
+    <i style="background:#2fae5f"></i>0<i style="background:#8ec74e"></i>1-2<i style="background:#d6c34a"></i>3-5
+    <i style="background:#e89a3c"></i>6-10<i style="background:#e3692f"></i>11-20<i style="background:#d23b34"></i>20+
+    <i style="background:#3a2730"></i>code didn't build<i style="background:#22272f"></i>round not run (n/a)</div>
+  <div id="detail"><span class="ph">Click a cell above to see the round's task and that model's failed requirements.</span></div>
+
+  <h2>Difficulty analysis</h2>
+  <div class='analysis'><p>This task builds <strong>secsentinel</strong>, a security-log analysis and automated threat-response CLI in Go: it ingests structured security events and computes timelines, severity histograms, burst/escalation scores, threat snapshots, deduplicated alerts, actor aggregation, risk prioritization and OLS forecasting — 15 rounds, the longest analytics chain here. The work is numeric and statistical, so correctness is exact: many tests compare floating-point outputs to tight tolerances (<em>"expected=0.0625 … tol=0.001"</em>).</p><p>The hardest requirements are the statistical sub-commands. <span class='req'>timeline</span> and its variants (severity-histogram, burst-score, escalation-index, risk-trend) fail for several models with <em>empty</em> output — <em>"expected=150.0 actual="</em> — meaning the metric was never computed. <span class='req'>prioritize.score</span> (the risk-scoring formula), <span class='req'>forecast.ols</span> (ordinary-least-squares prediction), <span class='req'>rate.rate-stats</span>, <span class='req'>histogram</span> bucketing/percentiles and <span class='req'>snapshot.campaigns</span> are the other heavily-missed items. Notably the malformed-input handlers — <span class='req'>summarize.malformed</span>, <span class='req'>respond.malformed</span>, <span class='req'>diff.errors</span>, <span class='req'>alert.dedup</span> — are the COMMON FAIL set even the strongest models brush against (<em>"expected=3 actual=1"</em>).</p></div>
+
+  <h2>Per-model failures (whole task)</h2>
+  <p class="sub" style="margin-top:0">Click a model to expand every requirement it failed across all rounds, with a representative reason from the verifier.</p>
+  <div id="breakdown"></div>
+
+  <h2>Performance gap</h2>
+  <div class='analysis'><p>This task discriminates sharply at the round level. <strong>Opus-4.8 is perfect — 15/15, 100% cases</strong> — and <strong>Qwen3.7-Max reaches 12/15 at 100% cases</strong>, losing only single malformed-input cases (<span class='req'>summarize.malformed</span>, <span class='req'>alert.dedup</span>, <span class='req'>diff.errors</span>). These two implemented essentially the entire statistical toolkit correctly. DeepSeek-V4-Pro (9/15, 75%) forms a clear second tier.</p><p>Below that, round scores fall fast even where case pass stays moderate: GLM-5.1 5/15 (77%), MiniMax-M3 4/15 (72%), GPT-5.5 3/15 (29%), DeepSeek-V4-Flash 3/15 (77%), Qwen3.6-Plus 2/15 (77%), MiniMax-M2.7 2/15 (82%) and Kimi-K2.6 just 1/15 (56%). The MiniMax-M2.7 case is the binary-reward signature in miniature — <strong>82% of cases pass but only 2 rounds clear</strong>, because each round bundles a statistical formula (prioritize.score, forecast.ols) it never quite gets exact. What separates the tiers is precision on the numeric formulas and the malformed-input edge handling: strong models emit the right value to four decimals; weak ones emit blanks or off-by-one counts that zero out an otherwise-passing round.</p></div>
+
+  <p class="foot">Test-case data extracted from the verifier <code>CASE_RESULT</code> logs of each model's run.
+    Reasons are the verifier's own <code>failure_reason</code> (back-filled from expected/actual when terse).</p>
+</div>
+
+<script src="../assets/site.js"></script>
+<script>
+fetch("../data/tasks/theme_d9_w11_security_automation_scripting.json").then(function(r){return r.json();}).then(function(T){
+  window.__MODELS__ = Object.keys(T.models);
+  var detail = document.getElementById("detail");
+  EvoViz.renderRounds(document.getElementById("rounds"), T);
+  EvoViz.renderHeatmap(document.getElementById("heatmap"), T, function(model, round){
+    EvoViz.renderDetail(detail, T, model, round);
+    detail.scrollIntoView({behavior:"smooth", block:"nearest"});
+  });
+  EvoViz.renderBreakdown(document.getElementById("breakdown"), T);
+});
+</script>
+</body></html>
