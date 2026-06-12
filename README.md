@@ -269,22 +269,21 @@ the **dataset score** defined in [Metrics](#metrics) — the mean over 26 tasks 
 task's `passed_steps / total_steps`. All cells are from complete chains; `oracle`
 scores 1.0 and `nop` scores 0 on every task.
 
-| Agent | Dataset score | Hard-task rate (≤0.5) | Perfect tasks |
-|:--|--:|--:|--:|
-| Claude-Opus-4.8 (xhigh) | 40.9 | 62% (16/26) | 6/26 |
-| GPT-5.5 | 23.5 | 88% (23/26) | 0/26 |
-| Kimi-K2.6 | 23.1 | 77% (20/26) | 1/26 |
-| MiniMax-M3 | 15.2 | 85% (22/26) | 1/26 |
-| DeepSeek-V4-Pro | 10.8 | 96% (25/26) | 0/26 |
-| Qwen3.6-Plus | 10.1 | 92% (24/26) | 1/26 |
-| GLM-5.1 | 8.5 | 96% (25/26) | 0/26 |
-| Qwen3.7-Max | 7.6 | 96% (25/26) | 0/26 |
-| DeepSeek-V4-Flash | 7.4 | 96% (25/26) | 0/26 |
-| MiniMax-M2.7 | 3.6 | 96% (25/26) | 0/26 |
+| Agent | Dataset score | Perfect tasks |
+|:--|--:|--:|
+| Claude-Opus-4.8 (xhigh) | 40.9 | 6/26 |
+| GPT-5.5 | 23.5 | 0/26 |
+| Kimi-K2.6 | 23.1 | 1/26 |
+| MiniMax-M3 | 15.2 | 1/26 |
+| DeepSeek-V4-Pro | 10.8 | 0/26 |
+| Qwen3.6-Plus | 10.1 | 1/26 |
+| GLM-5.1 | 8.5 | 0/26 |
+| Qwen3.7-Max | 7.6 | 0/26 |
+| DeepSeek-V4-Flash | 7.4 | 0/26 |
+| MiniMax-M2.7 | 3.6 | 0/26 |
 
-*Dataset score* is the mean per-task score ×100 (= mean per-step reward). *Hard-task
-rate* is the fraction of tasks with per-task score ≤0.5. Single-shot scores are
-strictly lower than the paper's best-of-4 MT@4 below and are not directly comparable.
+*Dataset score* is the mean per-task score ×100 (= mean per-step reward). Single-shot
+scores are not directly comparable to the paper's best-of-4 MT@4 below.
 Per-task / per-round detail: [`evaluation/sweeps/sweep_2026-06_single_shot.csv`](evaluation/sweeps/sweep_2026-06_single_shot.csv).
 
 ### Paper results (legacy format — deprecated)
