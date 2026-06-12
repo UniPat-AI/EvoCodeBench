@@ -260,11 +260,48 @@ python evaluation/compute_metrics.py \
 
 ## Results
 
+### Official multi-step format (current) — single-shot dataset score
+
+Evaluated on the **current** dataset release (`archives/evocodebench_wotraj.tar.zst`):
+Harbor official multi-step `steps/` layout, canonical `CASE_RESULT` per-case test
+logs, full 5–15 round chains, **one attempt per task** (no best-of-k). The score is
+the **dataset score** defined in [Metrics](#metrics) — the mean over 26 tasks of each
+task's `passed_steps / total_steps`. All cells are from complete chains; `oracle`
+scores 1.0 and `nop` scores 0 on every task.
+
+| Agent | Dataset score | Hard-task rate (≤0.5) | Perfect tasks |
+|:--|--:|--:|--:|
+| Claude-Opus-4.8 (xhigh) | 40.9 | 62% (16/26) | 6/26 |
+| GPT-5.5 | 23.5 | 88% (23/26) | 0/26 |
+| Kimi-K2.6 | 23.1 | 77% (20/26) | 1/26 |
+| MiniMax-M3 | 15.2 | 85% (22/26) | 1/26 |
+| DeepSeek-V4-Pro | 10.8 | 96% (25/26) | 0/26 |
+| Qwen3.6-Plus | 10.1 | 92% (24/26) | 1/26 |
+| GLM-5.1 | 8.5 | 96% (25/26) | 0/26 |
+| Qwen3.7-Max | 7.6 | 96% (25/26) | 0/26 |
+| DeepSeek-V4-Flash | 7.4 | 96% (25/26) | 0/26 |
+| MiniMax-M2.7 | 3.6 | 96% (25/26) | 0/26 |
+
+*Dataset score* is the mean per-task score ×100 (= mean per-step reward). *Hard-task
+rate* is the fraction of tasks with per-task score ≤0.5. Single-shot scores are
+strictly lower than the paper's best-of-4 MT@4 below and are not directly comparable.
+Per-task / per-round detail: [`evaluation/sweeps/sweep_2026-06_single_shot.csv`](evaluation/sweeps/sweep_2026-06_single_shot.csv).
+
+### Paper results (legacy format — deprecated)
+
+> **Deprecated.** The numbers below are from the **original paper evaluation**, run on
+> the **legacy `harbor_multiturn` runner** with the old flat `round_N/` task layout and
+> the pre-`CASE_RESULT` test logging — **not** the current Harbor official multi-step
+> `steps/` dataset above. They use the paper's **MT@4 / SR / Comp** metrics (best-of-4),
+> which differ from the current single-shot dataset score. Kept only for continuity with
+> the paper; **do not compare across the two tables.** The legacy runner and format are
+> preserved under [`legacy/`](legacy/).
+
 <p align="center">
-  <img src="assets/main_results.png" width="100%" alt="EvoCode-Bench main results">
+  <img src="assets/main_results.png" width="100%" alt="EvoCode-Bench main results (legacy paper evaluation)">
 </p>
 
-Paper results (original evaluation; MT@4 / SR / Comp as defined in the paper):
+Legacy paper results (MT@4 / SR / Comp as defined in the paper):
 
 | Agent | MT@4 | SR | Comp |
 |:--|--:|--:|--:|
@@ -275,7 +312,7 @@ Paper results (original evaluation; MT@4 / SR / Comp as defined in the paper):
 SR exceeds MT@4 by 22-40 points for most agents. Isolated round-solving is much easier than keeping the agent's own workspace correct across many rounds.
 
 <p align="center">
-  <img src="assets/sr_vs_mt_by_round.png" width="100%" alt="SR versus MT by round">
+  <img src="assets/sr_vs_mt_by_round.png" width="100%" alt="SR versus MT by round (legacy paper evaluation)">
 </p>
 
 ## Relation to Terminal-X
