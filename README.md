@@ -18,9 +18,14 @@
 
 ## News
 
-**June 2026.** EvoCode-Bench has **migrated to [Harbor's official multi-step task format](https://harborframework.com/docs/tasks/multi-step)**. It previously ran on our [`harbor_multiturn`](https://github.com/UniPat-AI/harbor_multiturn) evaluation framework; that format and its runner are preserved under [`legacy/`](legacy/) for reproducibility of the paper's original evaluation. On the official format, each task is a sequence of `[[steps]]` run in one persistent container, with a per-step verifier after each step and trial-level reward aggregation.
+**June 2026.** EvoCode-Bench runs on the **[Harbor official multi-step task format](https://harborframework.com/docs/tasks/multi-step)**. Each task is a sequence of `[[steps]]` run in one persistent container, with a per-step verifier after each step and trial-level reward aggregation.
 
 EvoCode-Bench tests whether coding agents can keep a project working as user requests change. It contains **26 stateful coding tasks** and **227 evaluated rounds** (Harbor *steps*). Each task keeps the same workspace and agent session for **5-15 rounds**, while cumulative executable tests check new requirements and still-active prior requirements.
+
+> The original paper evaluation used a different runner (`harbor_multiturn`) and the
+> MT@4 / SR / Comp metrics. That framework, the legacy task layout, and the paper
+> results are kept under [`legacy/`](legacy/README.md) for reproducibility — not needed
+> for normal use.
 
 ## Overview
 
@@ -121,12 +126,9 @@ Upstream Harbor's official multi-step runner provides:
 - a per-step verifier run against the cumulative test suite after each step;
 - trial-level reward aggregation via `multi_step_reward_strategy` (`mean` for EvoCode-Bench).
 
-**Single-Round Fast-Forward (SR)** — solving a target round after fast-forwarding the earlier rounds with reference deltas — is **not yet supported upstream**. It is provided by our Harbor fork [`harbor-official-fast-forward`](https://github.com/UniPat-AI/harbor-official-fast-forward), which adds `--fast-forward-mode oracle-solution` on top of official Harbor. (The legacy [`harbor_multiturn`](legacy/) framework also supports SR.)
-
-| Capability | Upstream Harbor | `harbor-official-fast-forward` (our fork) | legacy `harbor_multiturn` |
-|:--|:--:|:--:|:--:|
-| Full multi-step run (all steps) | ✓ | ✓ | ✓ |
-| Single-round fast-forward (SR) | ✗ (not yet) | ✓ | ✓ |
+> Need single-round fast-forward (SR), or want to reproduce the paper? See
+> [`legacy/`](legacy/README.md) — it covers our Harbor fork and the original
+> `harbor_multiturn` framework. Not required for normal use.
 
 ## Quick Start
 
@@ -144,7 +146,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 uv tool install harbor      # or: pip install harbor
 ```
 
-`pip install harbor` (upstream) runs full tasks (all steps). Single-Round Fast-Forward (SR) additionally needs our fork — see [Single-Round Fast-Forward](#single-round-fast-forward-sr).
+`pip install harbor` (upstream) runs full tasks (all steps).
 
 ### 2. Prepare Tasks
 
@@ -205,49 +207,14 @@ Each task writes Harbor outputs under:
 data/EvoCodeBench/<task>/harbor_jobs/<model>/
 ```
 
-## Single-Round Fast-Forward (SR)
-
-The paper reports SR as a complementary metric: the agent solves a target round after Harbor fast-forwards all previous rounds with reference deltas.
-
-> **SR requires our Harbor fork** — upstream Harbor does not yet support `--fast-forward-mode`. Point the runner at [`harbor-official-fast-forward`](https://github.com/UniPat-AI/harbor-official-fast-forward):
->
-> ```bash
-> git clone git@github.com:UniPat-AI/harbor-official-fast-forward.git
-> export HARBOR_BIN="uv --directory $(pwd)/harbor-official-fast-forward run harbor"
-> ```
-
-Solve only round 5 from a reference-completed prior state:
-
-```bash
-AGENT_MODEL=claude-opus-4-7 \
-  ./evaluation/run_single.sh data/EvoCodeBench/theme_d1_w1_code_build_greenfield_implementation \
-    agent --start-step 5 --end-step 5
-```
-
-Solve rounds 3-7 after fast-forwarding rounds 1-2:
-
-```bash
-AGENT_MODEL=claude-opus-4-7 \
-  ./evaluation/run_single.sh data/EvoCodeBench/theme_d1_w1_code_build_greenfield_implementation \
-    agent --start-step 3 --end-step 7
-```
-
-When `--start-step > 1`, the runner adds `--fast-forward-mode oracle-solution` so the earlier steps are prepared with the reference solutions (this flag exists only in the fork).
-
 ## Metrics
 
 Each step is scored with a **binary reward** — 1 if all of that step's key requirements pass, 0 otherwise — written by the verifier to `/logs/verifier/reward.txt`. Harbor aggregates a trial's per-step rewards into a trial-level reward via `multi_step_reward_strategy = "mean"`.
 
-The primary score is therefore the **mean per-step reward**:
+The score is the **mean per-step reward**:
 
 - **per-task score** = (passed steps) / (total steps) for the trial;
 - **dataset score** = mean of per-task scores across the 26 tasks.
-
-For continuity with the paper, `compute_metrics.py` also derives the paper's metrics from the same per-step rewards:
-
-- **MT@4**: `mean_t (1/N_t) sum_i max_{a<=4} r_{t,a,i}` (best-of-4 per round, averaged);
-- **SR**: single-round pass rate after reference fast-forwarding earlier rounds;
-- **Comp**: fraction of tasks completed through the final round in at least one attempt.
 
 ```bash
 python evaluation/compute_metrics.py \
@@ -258,14 +225,14 @@ python evaluation/compute_metrics.py \
 
 `--model` selects the `harbor_jobs/<model>/` results to score (the `oracle` and `nop` baselines are excluded by default).
 
+> The paper's MT@4 / SR / Comp metrics and single-round fast-forward evaluation live
+> in [`legacy/`](legacy/README.md).
+
 ## Results
 
-### Official multi-step format (current) — single-shot dataset score
-
-Evaluated on the **current** dataset release (`archives/evocodebench_wotraj.tar.zst`):
-Harbor official multi-step `steps/` layout, canonical `CASE_RESULT` per-case test
-logs, full 5–15 round chains, **one attempt per task** (no best-of-k). The score is
-the **dataset score** defined in [Metrics](#metrics) — the mean over 26 tasks of each
+Evaluated on the current dataset release with the Harbor official multi-step runner:
+full 5–15 round chains, **one attempt per task** (no best-of-k). The score is the
+**dataset score** defined in [Metrics](#metrics) — the mean over 26 tasks of each
 task's `passed_steps / total_steps`. All cells are from complete chains; `oracle`
 scores 1.0 and `nop` scores 0 on every task.
 
@@ -282,37 +249,10 @@ scores 1.0 and `nop` scores 0 on every task.
 | DeepSeek-V4-Flash | 7.4 | 0/26 |
 | MiniMax-M2.7 | 3.6 | 0/26 |
 
-*Dataset score* is the mean per-task score ×100 (= mean per-step reward). Single-shot
-scores are not directly comparable to the paper's best-of-4 MT@4 below.
+*Dataset score* is the mean per-task score ×100 (= mean per-step reward).
 Per-task / per-round detail: [`evaluation/sweeps/sweep_2026-06_single_shot.csv`](evaluation/sweeps/sweep_2026-06_single_shot.csv).
 
-### Paper results (legacy format — deprecated)
-
-> **Deprecated.** The numbers below are from the **original paper evaluation**, run on
-> the **legacy `harbor_multiturn` runner** with the old flat `round_N/` task layout and
-> the pre-`CASE_RESULT` test logging — **not** the current Harbor official multi-step
-> `steps/` dataset above. They use the paper's **MT@4 / SR / Comp** metrics (best-of-4),
-> which differ from the current single-shot dataset score. Kept only for continuity with
-> the paper; **do not compare across the two tables.** The legacy runner and format are
-> preserved under [`legacy/`](legacy/).
-
-<p align="center">
-  <img src="assets/main_results.png" width="100%" alt="EvoCode-Bench main results (legacy paper evaluation)">
-</p>
-
-Legacy paper results (MT@4 / SR / Comp as defined in the paper):
-
-| Agent | MT@4 | SR | Comp |
-|:--|--:|--:|--:|
-| Claude-Opus-4.7 | 54.0 | 76.7 | 42.3 |
-| GPT-5.5 | 52.4 | 74.4 | 38.5 |
-| Claude-Opus-4.6 | 44.0 | 78.9 | 34.6 |
-
-SR exceeds MT@4 by 22-40 points for most agents. Isolated round-solving is much easier than keeping the agent's own workspace correct across many rounds.
-
-<p align="center">
-  <img src="assets/sr_vs_mt_by_round.png" width="100%" alt="SR versus MT by round (legacy paper evaluation)">
-</p>
+> The original paper results (MT@4 / SR / Comp, legacy runner) are in [`legacy/`](legacy/README.md).
 
 ## Relation to Terminal-X
 
