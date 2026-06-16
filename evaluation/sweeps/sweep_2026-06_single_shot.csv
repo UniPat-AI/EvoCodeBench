@@ -11,7 +11,7 @@ theme_d10_w9_ml_ai_mlops_reproducibility_verification,8,3/8 c100%,3/8 c95%,0/8 c
 theme_d11_w2_scientific_numerical_brownfield_modification,7,7/7 c100%,2/7 c83%,2/7 c84%,0/7 c44%,0/7 c97%,6/7 c99%,0/7 c73%,1/7 c93%,0/7 c61%,0/7 c70%,each cell: passed_rounds/total · c=mean case pass %
 theme_d11_w2_scientific_numerical_brownfield_modification__not_1234,5,1/5 c99%,0/5 c96%,2/5 c99%,0/5 c60%,0/5 c76%,0/5 c96%,0/5 c97%,0/5 c93%,0/5 c94%,0/5 c23%,each cell: passed_rounds/total · c=mean case pass %
 theme_d11_w9_scientific_numerical_reproducibility_verification,8,3/8 c99%,7/8 c98%,0/8 c97%,0/8 c94%,0/8 c70%,5/8 c96%,0/8 c90%,0/8 c94%,0/8 c96%,0/8 c78%,each cell: passed_rounds/total · c=mean case pass %
-theme_d12_w1_automation_productivity_greenfield_implementation,7,0/7 c47%,1/7 c59%,4/7 c85%,0/7 c38%,0/7 c27%,0/7 c38%,5/7 c100%,0/7 c38%,0/7 c19%,5/7 c100%,each cell: passed_rounds/total · c=mean case pass %
+theme_d12_w1_automation_productivity_greenfield_implementation,7,3/7 c62%,1/7 c69%,0/7 c36%,0/7 c67%,0/7 c34%,0/7 c0%,0/7 c28%,0/7 c23%,0/7 c21%,0/7 c24%,each cell: passed_rounds/total · c=mean case pass %
 theme_d1_w11_code_build_automation_scripting,8,1/8 c95%,1/8 c78%,2/8 c93%,1/8 c90%,1/8 c92%,1/8 c88%,0/8 c69%,1/8 c90%,2/8 c60%,0/8 c79%,each cell: passed_rounds/total · c=mean case pass %
 theme_d1_w1_code_build_greenfield_implementation,9,2/9 c51%,5/9 c69%,0/9 c6%,1/9 c50%,0/9 c42%,0/9 c56%,1/9 c41%,4/9 c60%,0/9 c53%,0/9 c31%,each cell: passed_rounds/total · c=mean case pass %
 theme_d1_w2_code_build_brownfield_modification,8,6/8 c98%,2/8 c52%,0/8 c29%,0/8 c25%,0/8 c30%,1/8 c71%,0/8 c17%,0/8 c48%,0/8 c84%,0/8 c49%,each cell: passed_rounds/total · c=mean case pass %

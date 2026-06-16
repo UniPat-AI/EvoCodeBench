@@ -250,16 +250,16 @@ scores 1.0 and `nop` scores 0 on every task.
 
 | Agent | Reasoning | Dataset score | Case score | Perfect tasks |
 |:--|:--|--:|--:|--:|
-| Claude-Opus-4.8 | effort `xhigh` | 40.9 | 89.3 | 6/26 |
-| GPT-5.5 | effort `high` | 23.5 | 76.8 | 0/26 |
-| Kimi-K2.6 | thinking on¹ | 23.1 | 76.6 | 1/26 |
-| MiniMax-M3 | thinking `adaptive` | 15.2 | 69.1 | 1/26 |
-| DeepSeek-V4-Pro | effort `high` | 10.8 | 58.9 | 0/26 |
-| Qwen3.6-Plus | thinking on¹ | 10.1 | 64.1 | 1/26 |
-| GLM-5.1 | thinking on¹ | 8.5 | 50.3 | 0/26 |
-| Qwen3.7-Max | thinking on¹ | 7.6 | 63.5 | 0/26 |
-| DeepSeek-V4-Flash | effort `high` | 7.4 | 55.3 | 0/26 |
-| MiniMax-M2.7 | reasoning split | 3.6 | 45.5 | 0/26 |
+| Claude-Opus-4.8 | effort `xhigh` | 42.5 | 89.9 | 6/26 |
+| GPT-5.5 | effort `high` | 23.5 | 77.2 | 0/26 |
+| Kimi-K2.6 | thinking on¹ | 23.1 | 75.2 | 1/26 |
+| MiniMax-M3 | thinking `adaptive` | 15.2 | 69.2 | 1/26 |
+| DeepSeek-V4-Pro | effort `high` | 10.8 | 58.3 | 0/26 |
+| Qwen3.6-Plus | thinking on¹ | 10.1 | 64.4 | 1/26 |
+| Qwen3.7-Max | thinking on¹ | 7.6 | 64.7 | 0/26 |
+| GLM-5.1 | thinking on¹ | 6.3 | 48.4 | 0/26 |
+| DeepSeek-V4-Flash | effort `high` | 4.6 | 52.5 | 0/26 |
+| MiniMax-M2.7 | reasoning split | 0.8 | 42.6 | 0/26 |
 
 *Dataset score* is the mean per-task score ×100, where a task's score is `passed_rounds / total_rounds`
 and a round is "passed" only if it earns the binary reward 1 (**every** test case of that round passes).
@@ -267,7 +267,7 @@ and a round is "passed" only if it earns the binary reward 1 (**every** test cas
 *Case score* is the finer-grained companion. For each task, take each round's
 `passed_test_cases / total_test_cases`, average over the task's rounds (a round whose code fails to build,
 or that the chain never reached, counts as 0), then average over the 26 tasks ×100. It credits the partial
-progress the all-or-nothing round reward hides — e.g. GPT-5.5 scores 23.5 on rounds but passes **76.8%** of
+progress the all-or-nothing round reward hides — e.g. GPT-5.5 scores 23.5 on rounds but passes **77.2%** of
 test cases, because it often misses a round by just one or two cases. Both scores rank Opus-4.8 first, but
 the case score spreads the field more smoothly.
 
