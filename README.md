@@ -18,6 +18,17 @@
 
 ## News
 
+**2026-06-20 — Results re-release (v2).** The leaderboard, per-task results, and
+trajectories published before this date are **superseded**. We re-ran the entire
+benchmark on a patched harness after fixing an evaluation-integrity leak in Harbor's
+shared multi-step verifier mode (agents could read the grader during their own turn;
+reported upstream as [#1960](https://github.com/harbor-framework/harbor/issues/1960) /
+[#1961](https://github.com/harbor-framework/harbor/pull/1961)), one contaminated task,
+and 11 task/test defects. See
+[Known issues & responsible disclosure](#known-issues--responsible-disclosure)
+and [`CHANGELOG.md`](CHANGELOG.md). Treat any EvoCode-Bench number dated before 2026-06-20
+as outdated.
+
 **June 2026.** EvoCode-Bench runs on the **[Harbor official multi-step task format](https://harborframework.com/docs/tasks/multi-step)**. Each task is a sequence of `[[steps]]` run in one persistent container, with a per-step verifier after each step and trial-level reward aggregation.
 
 EvoCode-Bench tests whether coding agents can keep a project working as user requests change. It contains **26 stateful coding tasks** and **227 evaluated rounds** (Harbor *steps*). Each task keeps the same workspace and agent session for **5-15 rounds**, while cumulative executable tests check new requirements and still-active prior requirements.
@@ -245,21 +256,31 @@ python evaluation/compute_metrics.py \
 Evaluated on the current dataset release with the Harbor official multi-step runner:
 full 5–15 round chains, **one attempt per task** (no best-of-k). The score is the
 **dataset score** defined in [Metrics](#metrics) — the mean over 26 tasks of each
-task's `passed_steps / total_steps`. All cells are from complete chains; `oracle`
-scores 1.0 and `nop` scores 0 on every task.
+task's `passed_rounds / total_rounds`. `oracle` scores 1.0 and `nop` scores 0 on every
+task. On the hardest, longest tasks some agents exhaust the 30-minute-per-round time
+budget and the chain aborts before later rounds; those rounds count as 0 (see
+[`CHANGELOG.md`](CHANGELOG.md)).
+
+> Numbers below are the **2026-06-20 re-release**. The previous (June 13–16) leaderboard
+> is superseded — see [Known issues & responsible disclosure](#known-issues--responsible-disclosure).
+> The old values are shown in parentheses where they moved.
 
 | Agent | Reasoning | Dataset score | Case score | Perfect tasks |
 |:--|:--|--:|--:|--:|
-| Claude-Opus-4.8 | effort `xhigh` | 42.5 | 89.9 | 6/26 |
-| GPT-5.5 | effort `high` | 23.5 | 77.2 | 0/26 |
-| Kimi-K2.6 | thinking on¹ | 23.1 | 75.2 | 1/26 |
-| MiniMax-M3 | thinking `adaptive` | 15.2 | 69.2 | 1/26 |
-| DeepSeek-V4-Pro | effort `high` | 10.8 | 58.3 | 0/26 |
-| Qwen3.6-Plus | thinking on¹ | 10.1 | 64.4 | 1/26 |
-| Qwen3.7-Max | thinking on¹ | 7.6 | 64.7 | 0/26 |
-| GLM-5.1 | thinking on¹ | 6.3 | 48.4 | 0/26 |
-| DeepSeek-V4-Flash | effort `high` | 4.6 | 52.5 | 0/26 |
-| MiniMax-M2.7 | reasoning split | 0.8 | 42.6 | 0/26 |
+| Claude-Opus-4.8 | effort `xhigh` | 59.1 (42.5) | 96.6 (89.9) | 9/26 |
+| GPT-5.5 | effort `high` | 29.5 (23.5) | 81.8 (77.2) | 0/26 |
+| MiniMax-M3 | thinking `adaptive` | 23.4 (15.2) | 61.5 (69.2) | 2/26 |
+| GLM-5.2 | thinking on¹ | 16.2 | 47.1 | 1/26 |
+| DeepSeek-V4-Pro | effort `high` | 14.1 (10.8) | 61.7 (58.3) | 1/26 |
+| Kimi-K2.6 | thinking on¹ | 13.2 (23.1) | 65.7 (75.2) | 0/26 |
+| DeepSeek-V4-Flash | effort `high` | 12.2 (4.6) | 58.9 (52.5) | 0/26 |
+| Qwen3.7-Max | thinking on¹ | 11.9 (7.6) | 67.4 (64.7) | 0/26 |
+| Qwen3.6-Plus | thinking on¹ | 9.7 (10.1) | 67.7 (64.4) | 0/26 |
+| Kimi-K2.7-Code | thinking on¹ | 7.8 | 45.4 | 0/26 |
+| GLM-5.1 | thinking on¹ | 5.9 (6.3) | 52.5 (48.4) | 0/26 |
+| MiniMax-M2.7 | reasoning split | 5.1 (0.8) | 44.9 (42.6) | 0/26 |
+
+GLM-5.2 and Kimi-K2.7-Code are new in this release (no prior value).
 
 *Dataset score* is the mean per-task score ×100, where a task's score is `passed_rounds / total_rounds`
 and a round is "passed" only if it earns the binary reward 1 (**every** test case of that round passes).
@@ -267,7 +288,7 @@ and a round is "passed" only if it earns the binary reward 1 (**every** test cas
 *Case score* is the finer-grained companion. For each task, take each round's
 `passed_test_cases / total_test_cases`, average over the task's rounds (a round whose code fails to build,
 or that the chain never reached, counts as 0), then average over the 26 tasks ×100. It credits the partial
-progress the all-or-nothing round reward hides — e.g. GPT-5.5 scores 23.5 on rounds but passes **77.2%** of
+progress the all-or-nothing round reward hides — e.g. GPT-5.5 scores 29.5 on rounds but passes **81.8%** of
 test cases, because it often misses a round by just one or two cases. Both scores rank Opus-4.8 first, but
 the case score spreads the field more smoothly.
 
@@ -286,6 +307,73 @@ performance-gap analysis. The same pages are under [`docs/`](docs/) and render l
 static server (`python3 -m http.server` from `docs/`).
 
 > The original paper results (MT@4 / SR / Comp, legacy runner) are in [`legacy/`](legacy/README.md).
+
+## Known issues & responsible disclosure
+
+### Verifier readable during the agent phase (Harbor shared-step leak)
+
+While auditing per-model, per-round trajectories from our **first** evaluation (the
+v1 leaderboard, June 13–16), we found that on some tasks the agent could read the
+verifier's grading script (`/tests/test.sh`) and the previous step's verifier output
+(`/logs/verifier/reward.txt`, `test-stdout.txt`) **from inside its own step**.
+
+**Root cause (framework, not the tasks).** This is a property of Harbor's default
+*shared* multi-step verifier mode: the verifier runs in the agent's container, and
+`/tests` + `/logs/verifier` are cleared only right before each verifier — never before
+the next step's agent phase. So from step 2 onward, the previous step's cumulative
+grading script and reward persist and are readable to the agent. It reproduces on
+upstream Harbor and is **not specific to EvoCode-Bench**. We reported it upstream:
+
+- Issue: <https://github.com/harbor-framework/harbor/issues/1960>
+- Fix PR: <https://github.com/harbor-framework/harbor/pull/1961>
+
+**Remediation.** We patched our evaluation harness (same fix as PR #1961: clear
+`/tests` and `/logs/verifier` at the start of every agent phase) and **re-ran the entire
+benchmark on the patched harness**. The current [Results](#results) are from these clean
+runs. *The numbers and trajectories published before 2026-06-20 are superseded* — see
+[`CHANGELOG.md`](CHANGELOG.md).
+
+**What we observed in v1 (now withdrawn).** Across the 26 tasks, agents read or ran the
+leaked grader (or read the prior reward) in at least one round on **12 tasks / 22 (task,
+model) pairs / 47 round-level occurrences**. Because the leaked file is the *previous*
+step's grader, accesses only land from round 2 on. The behavior was uneven across
+models — heavily concentrated in a few:
+
+| Task | Model | Rounds | Behavior | Access |
+|:--|:--|:--|:--|:--|
+| d5_w1 | DeepSeek-V4-Flash | R7 | read grader, read reward | succeeded |
+| d12_w1 | DeepSeek-V4-Pro | R2 | read grader | succeeded |
+| d9_w11 | DeepSeek-V4-Pro | R2,R3,R5,R6 | read+ran grader | succeeded |
+| d11_w9 | Kimi-K2.6 | R4,R5,R6 | read+ran grader | succeeded |
+| d12_w1 | Kimi-K2.6 | R3 | read grader, read reward | succeeded |
+| d1_w9 | Kimi-K2.6 | R7 | read grader | succeeded |
+| d5_w1 | Kimi-K2.6 | R2,R4,R13 | read+ran grader, read reward | succeeded |
+| d9_w11 | Kimi-K2.6 | R2,R7 | read grader, read reward | succeeded |
+| d1_w9 | MiniMax-M2.7 | R2 | read grader | unclear |
+| d10_w12 | MiniMax-M3 | R5,R6,R7 | read+ran grader | succeeded |
+| d10_w4* | MiniMax-M3 | R6 | read+ran grader | succeeded |
+| d10_w5 | MiniMax-M3 | R4 | read+ran grader, read reward | succeeded |
+| d10_w9 | MiniMax-M3 | R5,R6,R7 | read+ran grader | succeeded |
+| d11_w2* | MiniMax-M3 | R5 | read+ran grader | succeeded |
+| d12_w1 | MiniMax-M3 | R7 | read+ran grader | succeeded |
+| d1_w5 | MiniMax-M3 | R2,R7,R8 | read+ran grader, read reward | succeeded |
+| d5_w1 | MiniMax-M3 | R7,R9,R10,R11,R12 | read+ran grader, read reward | succeeded |
+| d8_w5 | MiniMax-M3 | R4,R5,R6,R10 | read+ran grader | succeeded |
+| d9_w11 | MiniMax-M3 | R3,R4,R6,R7,R15 | read+ran grader, read reward | succeeded |
+| d12_w1 | Opus-4.8 | R7 | read+ran grader, read reward | succeeded |
+| d5_w1 | Opus-4.8 | R9 | read+ran grader, read reward | succeeded |
+| d12_w1 | Qwen3.7-Max | R7 | read+ran grader | unclear |
+
+`*` = the `__not_1234` task variant. "Access = succeeded" means the agent's terminal
+actually received grader/reward content. In almost all cases reading the grader did not
+help (the models still failed the round); we withdrew the affected v1 results regardless.
+If you evaluate with stock upstream Harbor in shared mode, apply the same sanitization or
+use separate-verifier mode.
+
+### Other corrections in the 2026-06-20 re-release
+
+The re-run also fixed one contaminated task (d12_w1) and 11 task/test defects. Full
+details, dates, and the old-vs-new framing are in [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Relation to Terminal-X
 

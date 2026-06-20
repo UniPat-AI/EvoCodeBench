@@ -19,10 +19,14 @@ OUT_TASKS = OUT_DIR + "/tasks"
 # display name -> harbor_jobs subdir
 MODELS = [
     ("Opus-4.8-xhigh", "claude-opus-4-8"), ("GPT-5.5", "gpt-5.5"), ("Kimi-K2.6", "kimi-k2.6"),
+    ("Kimi-K2.7-Code", "kimi-k2.7-code"),
     ("MiniMax-M3", "minimax-m3"), ("DeepSeek-V4-Pro", "deepseek-v4-pro"), ("Qwen3.6-Plus", "qwen3.6-plus"),
-    ("GLM-5.1", "glm-5.1"), ("Qwen3.7-Max", "qwen3.7-max"), ("DeepSeek-V4-Flash", "deepseek-v4-flash"),
-    ("MiniMax-M2.7", "minimax-m2.7"),
+    ("GLM-5.1", "glm-5.1"), ("GLM-5.2", "glm-5.2"), ("Qwen3.7-Max", "qwen3.7-max"),
+    ("DeepSeek-V4-Flash", "deepseek-v4-flash"), ("MiniMax-M2.7", "minimax-m2.7"),
 ]
+
+# (display, task) cells that are BLANK (excluded, NOT scored 0). None currently.
+BLANK_CELLS = set()
 
 CASE_RE = re.compile(
     r'CASE_RESULT\s+case_id=(?P<cid>\S+)\s+origin_step=(?P<orig>\S+)\s+'
@@ -175,8 +179,9 @@ for t in tasks:
         run = latest_run(t, ms)
         rounds = {}
         passed_rounds = 0
+        blank = (disp, t) in BLANK_CELLS
         for rnd in range(1, nrounds + 1):
-            pr = parse_round(run, rnd) if run else None
+            pr = None if blank else (parse_round(run, rnd) if run else None)
             rounds[rnd] = pr
             if pr and pr["reward"] == 1:
                 passed_rounds += 1
@@ -185,7 +190,7 @@ for t in tasks:
                     req_fail_models[f["req"]].add(disp)
                     req_reason_ex.setdefault(f["req"], f["reason"])
         rec["models"][disp] = rounds
-        rec["score"][disp] = passed_rounds  # passed rounds out of nrounds
+        rec["score"][disp] = None if blank else passed_rounds  # passed rounds out of nrounds; None = provider-outage blank
     # cross-model common-pain requirements (failed by >= half the models that ran)
     nmodels = len(MODELS)
     common = sorted(
@@ -199,7 +204,7 @@ for t in tasks:
     index["tasks"].append({
         "task": t, "name": md["name"], "difficulty": md["difficulty"],
         "category": md["category"], "n_rounds": nrounds,
-        "score": {d: round(rec["score"][d] / nrounds, 3) if nrounds else 0 for d in rec["score"]},
+        "score": {d: (None if rec["score"][d] is None else (round(rec["score"][d] / nrounds, 3) if nrounds else 0)) for d in rec["score"]},
     })
 
 with open(OUT_INDEX, "w") as f:
