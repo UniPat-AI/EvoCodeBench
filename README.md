@@ -351,10 +351,10 @@ models — heavily concentrated in a few:
 | d9_w11 | Kimi-K2.6 | R2,R7 | read grader, read reward | succeeded |
 | d1_w9 | MiniMax-M2.7 | R2 | read grader | unclear |
 | d10_w12 | MiniMax-M3 | R5,R6,R7 | read+ran grader | succeeded |
-| d10_w4* | MiniMax-M3 | R6 | read+ran grader | succeeded |
+| d10_w4 | MiniMax-M3 | R6 | read+ran grader | succeeded |
 | d10_w5 | MiniMax-M3 | R4 | read+ran grader, read reward | succeeded |
 | d10_w9 | MiniMax-M3 | R5,R6,R7 | read+ran grader | succeeded |
-| d11_w2* | MiniMax-M3 | R5 | read+ran grader | succeeded |
+| d11_w2 | MiniMax-M3 | R5 | read+ran grader | succeeded |
 | d12_w1 | MiniMax-M3 | R7 | read+ran grader | succeeded |
 | d1_w5 | MiniMax-M3 | R2,R7,R8 | read+ran grader, read reward | succeeded |
 | d5_w1 | MiniMax-M3 | R7,R9,R10,R11,R12 | read+ran grader, read reward | succeeded |
@@ -364,7 +364,7 @@ models — heavily concentrated in a few:
 | d5_w1 | Opus-4.8 | R9 | read+ran grader, read reward | succeeded |
 | d12_w1 | Qwen3.7-Max | R7 | read+ran grader | unclear |
 
-`*` = the `__not_1234` task variant. "Access = succeeded" means the agent's terminal
+`"Access = succeeded"` means the agent's terminal
 actually received grader/reward content. In almost all cases reading the grader did not
 help (the models still failed the round); we withdrew the affected v1 results regardless.
 If you evaluate with stock upstream Harbor in shared mode, apply the same sanitization or

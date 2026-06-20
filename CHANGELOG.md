@@ -62,9 +62,9 @@ mis-scored rounds. Each fix was re-validated against oracle (full pass) and nop 
 | d7_w5 | circuit-breaker `open`→`half_open` timing + unspecified IPC JSON schema | `test.sh` accepts `open`/`half_open`; instruction pins the IPC schema |
 | d10_w11 | `artifacts --list` `{entries:[]}` shape unspecified | instruction pins the entries shape |
 | d1_w5 | imported-target CWD unspecified, blocking all round 2+ | instruction pins CWD |
-| d11_w2 (`__not_1234`) | matrix numeric-format regex too strict | broadened the accepted numeric formats |
+| d11_w2 | matrix numeric-format regex too strict | broadened the accepted numeric formats |
 | d5_w9 | round-15 enum message comma-spacing mismatch | instruction matches the asserted format |
-| d10_w4 (`__not_1234`) | created/removed messages + a broken `c029` grep | fixed messages and the test grep |
+| d10_w4 | created/removed messages + a broken `c029` grep | fixed messages and the test grep |
 | d1_w11 | cached-build string + transitive mtime wording | clarified instruction |
 | d10_w8 | round-8 / round-2 truncation asserts unspecified | instruction pins the raw-map audit |
 
