@@ -49,6 +49,9 @@
   <h2>Performance gap</h2>
   <div class='analysis'><p>The top cluster in this 12-model evaluation is anchored by <strong>Opus-4.8 at 8/8 rounds and 100% cases</strong>, with MiniMax-M3 (7/8, 100%), GLM-5.1 (7/8, 99%), MiniMax-M2.7 (7/8, 99%), and DeepSeek-V4-Flash (7/8, 96%) close behind — all five get the auth and validation middleware working end-to-end and lose only the narrowest edge in <span class='req'>model-create</span> duplicate enforcement. Kimi-K2.6 holds at 5/8 (97% cases), clearing the auth gates but dropping three rounds to the same conflict-check gap.</p><p>Six models pass zero rounds. GPT-5.5 (0/8, 68%) and DeepSeek-V4-Pro (0/8, 66%) retain partial case coverage, and Kimi-K2.7-Code reaches 82% cases without a single full-round pass, but Qwen3.6-Plus (0/8, 0%), GLM-5.2 (0/8, 0%), and Qwen3.7-Max (0/8, 55%) fall at or below the zero-cases threshold. The binary round reward is unforgiving here: hardening middleware — particularly <span class='req'>model-create</span> conflict handling — is the single gate separating the clusters.</p></div>
 
+  <h2>Is the task fair? (top-model check)</h2>
+  <div class='analysis'><p>Claude Opus 4.8 solved all 8 rounds at full marks (8/8 rounds, 100% of test cases across every security-hardening requirement), confirming this task is solvable and fairly graded end-to-end — including the oracle. Failures seen across weaker models, particularly the near-universal gap in <span class='req'>model-create</span> duplicate enforcement, reflect a genuine capability boundary rather than any defect in the tests or scoring.</p></div>
+
   <p class="foot">Test-case data extracted from the verifier <code>CASE_RESULT</code> logs of each model's run.
     Reasons are the verifier's own <code>failure_reason</code> (back-filled from expected/actual when terse).</p>
 </div>

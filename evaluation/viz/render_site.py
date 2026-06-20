@@ -64,6 +64,8 @@ PAGE = """<!doctype html>
 
   %%GAP%%
 
+  %%OPUS%%
+
   <p class="foot">Test-case data extracted from the verifier <code>CASE_RESULT</code> logs of each model's run.
     Reasons are the verifier's own <code>failure_reason</code> (back-filled from expected/actual when terse).</p>
 </div>
@@ -115,6 +117,7 @@ def render(task):
         "%%HEADLINE%%": headline,
         "%%DIFFICULTY%%": block("difficulty", "Difficulty analysis", A.get("difficulty", "")),
         "%%GAP%%": block("gap", "Performance gap", A.get("gap", "")),
+        "%%OPUS%%": block("opus", "Is the task fair? (top-model check)", A.get("opus_focus", "")),
     }
     page = PAGE
     for k, v in repl.items():

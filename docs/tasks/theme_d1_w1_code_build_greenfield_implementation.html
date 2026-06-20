@@ -49,6 +49,9 @@
   <h2>Performance gap</h2>
   <div class='analysis'><p><strong>Opus-4.8-xhigh and DeepSeek-V4-Pro both clear all 9/9 rounds at 100% case pass</strong>, followed closely by MiniMax-M3 and Qwen3.7-Max at 8/9 (99% and 100% case pass respectively) and Qwen3.6-Plus and GLM-5.2 at 7/9. GPT-5.5 and DeepSeek-V4-Flash each land at 5/9, with DeepSeek-V4-Flash notably higher on case pass (98% vs 69%), indicating GPT-5.5 fails rounds more cleanly while DeepSeek-V4-Flash passes more cases within failed rounds. MiniMax-M2.7 reaches 4/9 at 91%.</p><p>The bottom tier is sharply divided: <strong>GLM-5.1 stalls at 0/9 rounds but retains 64% case pass</strong>, suggesting partial subcommand wiring without ever completing a full round cleanly, while <strong>Kimi-K2.7-Code collapses to 0/9 and only 16% case pass</strong> — the weakest result across the field and a clear outlier even among non-completing models.</p></div>
 
+  <h2>Is the task fair? (top-model check)</h2>
+  <div class='analysis'><p>Claude Opus 4.8 (xhigh effort) solved all 9 rounds at 100% case pass, and the oracle passes every round as well — together confirming that the task is solvable and the verifier grades fairly. Any model that falls short of a perfect score is running into genuine capability limits: insufficient command-surface invention, missed output-contract semantics (slot assignments, critical-path tiebreaking, signal-exit encoding), or incomplete subcommand wiring — not a flaw in the test design.</p></div>
+
   <p class="foot">Test-case data extracted from the verifier <code>CASE_RESULT</code> logs of each model's run.
     Reasons are the verifier's own <code>failure_reason</code> (back-filled from expected/actual when terse).</p>
 </div>

@@ -49,6 +49,9 @@
   <h2>Performance gap</h2>
   <div class='analysis'><p>Round scores are near-uniformly low across 12 models — <strong>Opus-4.8 stands alone at 5/11</strong>, Qwen3.6-Plus reaches 2/11, GPT-5.5 1/11, and all nine remaining models score 0/11 — so case pass tells the real story, and it ranges from 9% to 98%. <strong>Opus-4.8 (98% cases)</strong> clearly builds the whole orchestrator and loses only narrow output-contract edges. Qwen3.6-Plus (82%) and GPT-5.5 (79%) form a second tier, with Kimi-K2.7-Code (71%) and DeepSeek-V4-Flash (70%) close behind.</p><p>The weak tier is genuinely broken at the case level. <strong>MiniMax-M2.7 collapses to 9% case pass</strong>, with GLM-5.1, DeepSeek-V4-Pro and MiniMax-M3 all at 21%, and GLM-5.2 at 38% — far below the field, suggesting early structural mistakes that poisoned the whole chain. The universally-failing requirements <span class='req'>scale.get</span>, <span class='req'>scale.set</span>, <span class='req'>health.filter</span> and <span class='req'>health.scale-interaction</span> reveal that even the stronger models cannot satisfy the precise output contracts required for health and scaling subsystems to interact correctly.</p></div>
 
+  <h2>Is the task fair? (top-model check)</h2>
+  <div class='analysis'><p>Opus-4.8 passed rounds 1–5 cleanly then stalled at round 6 ('Add per-environment configuration variable management') — a single-case near-miss where 354 of 355 cases passed but the all-or-nothing round reward turned that one slip into a 0; the oracle suite passes that round, confirming the miss is a genuine capability gap rather than a grading artifact.</p></div>
+
   <p class="foot">Test-case data extracted from the verifier <code>CASE_RESULT</code> logs of each model's run.
     Reasons are the verifier's own <code>failure_reason</code> (back-filled from expected/actual when terse).</p>
 </div>

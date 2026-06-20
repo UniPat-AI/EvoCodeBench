@@ -49,6 +49,9 @@
   <h2>Performance gap</h2>
   <div class='analysis'><p>This task produces the <strong>steepest single-model lead in the set</strong>. <strong>Opus-4.8 scores 6/8 rounds at 99% case pass</strong>, clearing nearly every requirement across six consecutive rounds. Only two other models clear even one round: GPT-5.5 at 1/8 (57%) and DeepSeek-V4-Pro at 1/8 (49%).</p><p>The remaining 10 models all land at <strong>0/8 rounds</strong>, with case rates ranging from Qwen3.6-Plus at 9% up to MiniMax-M3 at 47% — wide variation but no clean rounds anywhere. The separation is almost entirely Opus vs. the field: only Opus consistently handles closure semantics, capture-scope correctness and nested call frames across rounds; everyone else gets the happy path but breaks on the stateful, scoping-sensitive constructs that define the later rounds.</p></div>
 
+  <h2>Is the task fair? (top-model check)</h2>
+  <div class='analysis'><p>Opus-4.8 cleared 6 of 8 rounds at 99% case pass, but Round 5 (closure capture semantics) stopped it: 44/45 cases passed and only <span class='req'>capture-scope</span> failed, producing <em>999 1</em> instead of the required <em>999 42</em> — a genuine variable-capture bug where the closure snapshotted the wrong binding rather than closing over the mutable environment. The oracle passes every round, so this is not a grading artifact; it reflects the precise semantic gap between by-value snapshots and true by-reference closure semantics that trips even the strongest model. Weaker model failures on the same requirement are therefore a capability issue, not a task or test defect.</p></div>
+
   <p class="foot">Test-case data extracted from the verifier <code>CASE_RESULT</code> logs of each model's run.
     Reasons are the verifier's own <code>failure_reason</code> (back-filled from expected/actual when terse).</p>
 </div>
