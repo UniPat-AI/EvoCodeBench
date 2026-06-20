@@ -270,7 +270,7 @@ budget and the chain aborts before later rounds; those rounds count as 0 (see
 | Claude-Opus-4.8 | effort `xhigh` | 59.1 (42.5) | 96.6 (89.9) | 9/26 |
 | GPT-5.5 | effort `high` | 29.5 (23.5) | 81.8 (77.2) | 0/26 |
 | MiniMax-M3 | thinking `adaptive` | 23.4 (15.2) | 61.5 (69.2) | 2/26 |
-| GLM-5.2 | thinking on¹ | 16.2 | 47.1 | 1/26 |
+| GLM-5.2 | thinking on¹ | 16.2 | 47.3 | 1/26 |
 | DeepSeek-V4-Pro | effort `high` | 14.1 (10.8) | 61.7 (58.3) | 1/26 |
 | Kimi-K2.6 | thinking on¹ | 13.2 (23.1) | 65.7 (75.2) | 0/26 |
 | DeepSeek-V4-Flash | effort `high` | 12.2 (4.6) | 58.9 (52.5) | 0/26 |
