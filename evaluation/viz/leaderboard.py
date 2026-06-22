@@ -21,8 +21,11 @@ Outputs:
 """
 import os, glob, re, json, argparse, statistics
 
-TASKS_DIR = "/home/shenhaiyang/Source/swebenchpp/data/archive/multiturn/multiturn_bench/harbor_official_multistep_converted/evocodebench_wotraj"
-REPO = "/nvme1/shenhaiyang/Source/EvoCodeBench"
+TASKS_DIR = os.environ.get(
+    "EVOCODEBENCH_TASKS_DIR",
+    "/nvme1/shenhaiyang/Source/swebenchpp/data/multiturn/archives/harbor_official_multistep_converted/evocodebench_wotraj",
+)
+REPO = os.environ.get("EVOCODEBENCH_REPO", "/nvme1/shenhaiyang/Source/EvoCodeBench")
 
 # (display, harbor_jobs subdir, reasoning-label)
 MODELS = [
@@ -73,6 +76,16 @@ def round_caseratio(run, rnd):
     return (succ / total) if total else 0.0
 
 
+def round_reached(run, rnd):
+    if not run:
+        return False
+    patterns = [
+        f"**/steps/round-{rnd}/verifier/reward.txt",
+        f"**/steps/round-{rnd}/verifier/test-stdout.txt",
+    ]
+    return any(glob.glob(os.path.join(run, pattern), recursive=True) for pattern in patterns)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--json", action="store_true")
@@ -83,42 +96,47 @@ def main():
                    if d.startswith("theme_") and os.path.isdir(os.path.join(TASKS_DIR, d, "steps")))
     nrounds = {t: len(glob.glob(os.path.join(TASKS_DIR, t, "steps", "round-*"))) for t in tasks}
 
-    # cell[(disp,task)] = (passed, total, casepct, blank_bool)
+    # cell[(disp,task)] = (passed, total, casepct, reached_rounds, blank_bool)
     cell = {}
     for disp, ms, _ in MODELS:
         for t in tasks:
             if (ms, t) in BLANK:
-                cell[(disp, t)] = (None, nrounds[t], None, True)
+                cell[(disp, t)] = (None, nrounds[t], None, None, True)
                 continue
             run = latest_run(t, ms)
             n = nrounds[t]
             passed = 0
             ratios = []
+            reached = 0
             for rnd in range(1, n + 1):
+                if round_reached(run, rnd):
+                    reached += 1
                 rw = round_reward(run, rnd) if run else None
                 if rw is not None and rw >= 0.999:
                     passed += 1
                 ratios.append(round_caseratio(run, rnd) if run else 0.0)
             casepct = 100 * statistics.mean(ratios) if ratios else 0.0
-            cell[(disp, t)] = (passed, n, casepct, False)
+            cell[(disp, t)] = (passed, n, casepct, reached, False)
 
     # leaderboard
     board = []
     for disp, ms, reason in MODELS:
-        ds, cs, perfect, scored = [], [], 0, 0
+        ds, cs, avg_rounds, perfect, scored = [], [], [], 0, 0
         for t in tasks:
-            p, n, cp, blank = cell[(disp, t)]
+            p, n, cp, reached, blank = cell[(disp, t)]
             if blank:
                 continue
             scored += 1
             ds.append(p / n if n else 0)
             cs.append(cp)
+            avg_rounds.append(reached or 0)
             if p == n and n > 0:
                 perfect += 1
         board.append({
             "model": disp, "reason": reason,
             "dataset": round(100 * statistics.mean(ds), 1) if ds else 0.0,
             "case": round(statistics.mean(cs), 1) if cs else 0.0,
+            "avg_rounds": round(statistics.mean(avg_rounds), 1) if avg_rounds else 0.0,
             "perfect": perfect, "scored_tasks": scored,
         })
     board.sort(key=lambda x: -x["dataset"])
@@ -126,10 +144,10 @@ def main():
     if args.json:
         print(json.dumps({"board": board, "cells": {f"{d}|{t}": cell[(d, t)] for d, t in cell}}, indent=2))
     else:
-        print(f"{'Agent':<20}{'Reasoning':<20}{'Dataset':>8}{'Case':>7}{'Perfect':>9}{'N':>4}")
+        print(f"{'Agent':<20}{'Reasoning':<20}{'Dataset':>8}{'Case':>7}{'AvgRnd':>8}{'Perfect':>9}{'N':>4}")
         for b in board:
             note = "" if b["scored_tasks"] == 26 else f"  (over {b['scored_tasks']} tasks; d7_w5 blank)"
-            print(f"{b['model']:<20}{b['reason']:<20}{b['dataset']:>8}{b['case']:>7}{str(b['perfect'])+'/'+str(b['scored_tasks']):>9}{b['scored_tasks']:>4}{note}")
+            print(f"{b['model']:<20}{b['reason']:<20}{b['dataset']:>8}{b['case']:>7}{b['avg_rounds']:>8}{str(b['perfect'])+'/'+str(b['scored_tasks']):>9}{b['scored_tasks']:>4}{note}")
 
     if args.write_csv:
         csv = os.path.join(REPO, "evaluation", "sweeps", "sweep_2026-06_single_shot.csv")
@@ -138,9 +156,9 @@ def main():
         for t in tasks:
             row = [t, str(nrounds[t])]
             for d in cols:
-                p, n, cp, blank = cell[(d, t)]
-                row.append("—" if blank else f"{p}/{n} c{round(cp)}%")
-            row.append("each cell: passed_rounds/total · c=mean case pass %")
+                p, n, cp, reached, blank = cell[(d, t)]
+                row.append("—" if blank else f"{p}/{n} c{round(cp)}% r{reached}")
+            row.append("each cell: passed_rounds/total · c=mean case pass % · r=rounds actually reached")
             lines.append(",".join(row))
         open(csv, "w").write("\n".join(lines) + "\n")
         print(f"\nwrote {csv} ({len(tasks)} tasks × {len(cols)} models)")

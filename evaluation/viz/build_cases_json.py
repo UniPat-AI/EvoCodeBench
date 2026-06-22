@@ -11,8 +11,11 @@ Source: <TASKS_DIR>/<task>/harbor_jobs/<model-short>/<latest 2026-*>/**/steps/ro
 import os, glob, re, json, html
 from collections import defaultdict, Counter
 
-TASKS_DIR = "/home/shenhaiyang/Source/swebenchpp/data/archive/multiturn/multiturn_bench/harbor_official_multistep_converted/evocodebench_wotraj"
-OUT_DIR = "/home/shenhaiyang/Source/EvoCodeBench/docs/data"
+TASKS_DIR = os.environ.get(
+    "EVOCODEBENCH_TASKS_DIR",
+    "/nvme1/shenhaiyang/Source/swebenchpp/data/multiturn/archives/harbor_official_multistep_converted/evocodebench_wotraj",
+)
+OUT_DIR = os.environ.get("EVOCODEBENCH_DOCS_DATA", "/nvme1/shenhaiyang/Source/EvoCodeBench/docs/data")
 OUT_INDEX = OUT_DIR + "/index.json"
 OUT_TASKS = OUT_DIR + "/tasks"
 

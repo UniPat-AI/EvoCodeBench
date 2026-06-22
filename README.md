@@ -265,20 +265,20 @@ budget and the chain aborts before later rounds; those rounds count as 0 (see
 > is superseded — see [Known issues & responsible disclosure](#known-issues--responsible-disclosure).
 > The old values are shown in parentheses where they moved.
 
-| Agent | Reasoning | Dataset score | Case score | Perfect tasks |
-|:--|:--|--:|--:|--:|
-| Claude-Opus-4.8 | effort `xhigh` | 59.1 (42.5) | 96.6 (89.9) | 9/26 |
-| GPT-5.5 | effort `high` | 29.5 (23.5) | 81.8 (77.2) | 0/26 |
-| MiniMax-M3 | thinking `adaptive` | 23.4 (15.2) | 61.5 (69.2) | 2/26 |
-| GLM-5.2 | thinking on¹ | 16.2 | 47.3 | 1/26 |
-| DeepSeek-V4-Pro | effort `high` | 14.1 (10.8) | 61.7 (58.3) | 1/26 |
-| Kimi-K2.6 | thinking on¹ | 13.2 (23.1) | 65.7 (75.2) | 0/26 |
-| DeepSeek-V4-Flash | effort `high` | 12.2 (4.6) | 58.9 (52.5) | 0/26 |
-| Qwen3.7-Max | thinking on¹ | 11.9 (7.6) | 67.4 (64.7) | 0/26 |
-| Qwen3.6-Plus | thinking on¹ | 9.7 (10.1) | 67.7 (64.4) | 0/26 |
-| Kimi-K2.7-Code | thinking on¹ | 7.8 | 45.4 | 0/26 |
-| GLM-5.1 | thinking on¹ | 5.9 (6.3) | 52.5 (48.4) | 0/26 |
-| MiniMax-M2.7 | reasoning split | 5.1 (0.8) | 44.9 (42.6) | 0/26 |
+| Agent | Reasoning | Dataset score | Case score | Avg rounds | Perfect tasks |
+|:--|:--|--:|--:|--:|--:|
+| Claude-Opus-4.8 | effort `xhigh` | 59.1 (42.5) | 96.6 (89.9) | 8.7 | 9/26 |
+| GPT-5.5 | effort `high` | 29.5 (23.5) | 81.8 (77.2) | 8.7 | 0/26 |
+| MiniMax-M3 | thinking `adaptive` | 23.4 (15.2) | 61.5 (69.2) | 8.4 | 2/26 |
+| GLM-5.2 | thinking on¹ | 16.2 | 47.6 | 8.5 | 1/26 |
+| DeepSeek-V4-Pro | effort `high` | 14.1 (10.8) | 61.7 (58.3) | 8.5 | 1/26 |
+| Kimi-K2.6 | thinking on¹ | 13.2 (23.1) | 65.7 (75.2) | 8.6 | 0/26 |
+| DeepSeek-V4-Flash | effort `high` | 12.2 (4.6) | 58.9 (52.5) | 8.4 | 0/26 |
+| Qwen3.7-Max | thinking on¹ | 11.9 (7.6) | 67.4 (64.7) | 8.5 | 0/26 |
+| Qwen3.6-Plus | thinking on¹ | 9.7 (10.1) | 67.7 (64.4) | 8.6 | 0/26 |
+| Kimi-K2.7-Code | thinking on¹ | 7.8 | 45.4 | 8.4 | 0/26 |
+| GLM-5.1 | thinking on¹ | 5.9 (6.3) | 52.5 (48.4) | 8.6 | 0/26 |
+| MiniMax-M2.7 | reasoning split | 5.1 (0.8) | 44.9 (42.6) | 8.2 | 0/26 |
 
 GLM-5.2 and Kimi-K2.7-Code are new in this release (no prior value).
 
@@ -291,6 +291,10 @@ or that the chain never reached, counts as 0), then average over the 26 tasks ×
 progress the all-or-nothing round reward hides — e.g. GPT-5.5 scores 29.5 on rounds but passes **81.8%** of
 test cases, because it often misses a round by just one or two cases. Both scores rank Opus-4.8 first, but
 the case score spreads the field more smoothly.
+
+*Avg rounds* is the mean number of rounds each agent actually reached per task. If a run aborts before
+later rounds, those later rounds are not included in this average; they still count as 0 for Dataset score
+and Case score.
 
 *Reasoning* is the thinking configuration used for each model: models with an effort knob ran at the
 listed level (Opus at its highest, `xhigh`; the rest at `high`); ¹ models without an
