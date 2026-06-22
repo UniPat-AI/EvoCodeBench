@@ -267,18 +267,18 @@ budget and the chain aborts before later rounds; those rounds count as 0 (see
 
 | Agent | Reasoning | Dataset score | Case score | Avg rounds | Perfect tasks |
 |:--|:--|--:|--:|--:|--:|
-| Claude-Opus-4.8 | effort `xhigh` | 59.1 (42.5) | 96.6 (89.9) | 8.7 | 9/26 |
-| GPT-5.5 | effort `high` | 29.5 (23.5) | 81.8 (77.2) | 8.7 | 0/26 |
-| MiniMax-M3 | thinking `adaptive` | 23.4 (15.2) | 61.5 (69.2) | 8.4 | 2/26 |
-| GLM-5.2 | thinking on¹ | 16.2 | 47.6 | 8.5 | 1/26 |
-| DeepSeek-V4-Pro | effort `high` | 14.1 (10.8) | 61.7 (58.3) | 8.5 | 1/26 |
-| Kimi-K2.6 | thinking on¹ | 13.2 (23.1) | 65.7 (75.2) | 8.6 | 0/26 |
-| DeepSeek-V4-Flash | effort `high` | 12.2 (4.6) | 58.9 (52.5) | 8.4 | 0/26 |
-| Qwen3.7-Max | thinking on¹ | 11.9 (7.6) | 67.4 (64.7) | 8.5 | 0/26 |
-| Qwen3.6-Plus | thinking on¹ | 9.7 (10.1) | 67.7 (64.4) | 8.6 | 0/26 |
-| Kimi-K2.7-Code | thinking on¹ | 7.8 | 45.4 | 8.4 | 0/26 |
-| GLM-5.1 | thinking on¹ | 5.9 (6.3) | 52.5 (48.4) | 8.6 | 0/26 |
-| MiniMax-M2.7 | reasoning split | 5.1 (0.8) | 44.9 (42.6) | 8.2 | 0/26 |
+| Claude-Opus-4.8 | effort `xhigh` | 59.1 (42.5) | 96.6 (89.9) | 62.2 | 9/26 |
+| GPT-5.5 | effort `high` | 29.5 (23.5) | 81.8 (77.2) | 53.7 | 0/26 |
+| MiniMax-M3 | thinking `adaptive` | 23.4 (15.2) | 61.5 (69.2) | 123.7 | 2/26 |
+| GLM-5.2 | thinking on¹ | 16.2 | 47.6 | 66.1 | 1/26 |
+| DeepSeek-V4-Pro | effort `high` | 14.1 (10.8) | 61.7 (58.3) | 144.1 | 1/26 |
+| Kimi-K2.6 | thinking on¹ | 13.2 (23.1) | 65.7 (75.2) | 117.4 | 0/26 |
+| DeepSeek-V4-Flash | effort `high` | 12.2 (4.6) | 58.9 (52.5) | 122.2 | 0/26 |
+| Qwen3.7-Max | thinking on¹ | 11.9 (7.6) | 67.4 (64.7) | 117.1 | 0/26 |
+| Qwen3.6-Plus | thinking on¹ | 9.7 (10.1) | 67.7 (64.4) | 115.8 | 0/26 |
+| Kimi-K2.7-Code | thinking on¹ | 7.8 | 45.4 | 67.5 | 0/26 |
+| GLM-5.1 | thinking on¹ | 5.9 (6.3) | 52.5 (48.4) | 88.4 | 0/26 |
+| MiniMax-M2.7 | reasoning split | 5.1 (0.8) | 44.9 (42.6) | 115.1 | 0/26 |
 
 GLM-5.2 and Kimi-K2.7-Code are new in this release (no prior value).
 
@@ -292,9 +292,9 @@ progress the all-or-nothing round reward hides — e.g. GPT-5.5 scores 29.5 on r
 test cases, because it often misses a round by just one or two cases. Both scores rank Opus-4.8 first, but
 the case score spreads the field more smoothly.
 
-*Avg rounds* is the mean number of rounds each agent actually reached per task. If a run aborts before
-later rounds, those later rounds are not included in this average; they still count as 0 for Dataset score
-and Case score.
+*Avg rounds* is the mean number of agent-tool interactions per reached benchmark round, computed from
+the run's `agent/trajectory.json` files. If a run aborts before later benchmark rounds, those missing
+rounds are not included in this average; they still count as 0 for Dataset score and Case score.
 
 *Reasoning* is the thinking configuration used for each model: models with an effort knob ran at the
 listed level (Opus at its highest, `xhigh`; the rest at `high`); ¹ models without an
@@ -303,6 +303,18 @@ GLM/Kimi `thinking.type=enabled`), and MiniMax M3/M2.7 used their adaptive / spl
 reasoning modes. All agents used the `terminus-2` scaffold.
 Per-task / per-round / per-test-case detail: [`evaluation/sweeps/sweep_2026-06_single_shot.csv`](evaluation/sweeps/sweep_2026-06_single_shot.csv)
 and the [interactive results site](https://unipat-ai.github.io/EvoCodeBench/).
+The released Hugging Face resources also include the clean evaluation trajectories; use the
+per-round `agent/trajectory.json` files to audit model behavior and reproduce the Avg rounds values.
+
+To recompute the leaderboard table from the released run artifacts:
+
+```bash
+EVOCODEBENCH_TASKS_DIR=data/EvoCodeBench \
+python evaluation/viz/leaderboard.py --write-csv
+```
+
+This script reads verifier rewards and `CASE_SUMMARY` logs for Dataset/Case score, and
+reads each reached round's `agent/trajectory.json` to count agent-tool interactions for Avg rounds.
 
 **Explore the results interactively → [unipat-ai.github.io/EvoCodeBench](https://unipat-ai.github.io/EvoCodeBench/)** —
 one page per task with a per-round × per-model test-case heatmap, drill-down into the exact

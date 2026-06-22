@@ -9,6 +9,7 @@ For each (model, task):
 Then per model:
   - Dataset score = mean over scored tasks of (passed_rounds/total_rounds) x100
   - Case score    = mean over scored tasks of (per-task case%) x100
+  - Avg rounds    = mean tool calls per reached benchmark round
   - Perfect tasks = # tasks with passed_rounds == total_rounds
 
 POLICY: missing / timeout / empty-reply / aborted rounds count as 0 (no fabrication).
@@ -76,14 +77,29 @@ def round_caseratio(run, rnd):
     return (succ / total) if total else 0.0
 
 
-def round_reached(run, rnd):
+def round_tool_calls(run, rnd):
     if not run:
-        return False
-    patterns = [
-        f"**/steps/round-{rnd}/verifier/reward.txt",
-        f"**/steps/round-{rnd}/verifier/test-stdout.txt",
-    ]
-    return any(glob.glob(os.path.join(run, pattern), recursive=True) for pattern in patterns)
+        return None
+    paths = glob.glob(os.path.join(run, f"**/steps/round-{rnd}/agent/trajectory.json"), recursive=True)
+    if not paths:
+        return None
+    try:
+        data = json.load(open(paths[0]))
+    except Exception:
+        return None
+    steps = data.get("steps", []) if isinstance(data, dict) else data
+    if not isinstance(steps, list):
+        return None
+    total = 0
+    for step in steps:
+        if not isinstance(step, dict) or step.get("source") != "agent":
+            continue
+        tool_calls = step.get("tool_calls")
+        if isinstance(tool_calls, list):
+            total += len(tool_calls)
+        elif tool_calls:
+            total += 1
+    return total
 
 
 def main():
@@ -96,40 +112,43 @@ def main():
                    if d.startswith("theme_") and os.path.isdir(os.path.join(TASKS_DIR, d, "steps")))
     nrounds = {t: len(glob.glob(os.path.join(TASKS_DIR, t, "steps", "round-*"))) for t in tasks}
 
-    # cell[(disp,task)] = (passed, total, casepct, reached_rounds, blank_bool)
+    # cell[(disp,task)] = (passed, total, casepct, avg_tool_calls, tool_rounds, blank_bool)
     cell = {}
     for disp, ms, _ in MODELS:
         for t in tasks:
             if (ms, t) in BLANK:
-                cell[(disp, t)] = (None, nrounds[t], None, None, True)
+                cell[(disp, t)] = (None, nrounds[t], None, None, 0, True)
                 continue
             run = latest_run(t, ms)
             n = nrounds[t]
             passed = 0
             ratios = []
-            reached = 0
+            tool_counts = []
             for rnd in range(1, n + 1):
-                if round_reached(run, rnd):
-                    reached += 1
+                tc = round_tool_calls(run, rnd)
+                if tc is not None:
+                    tool_counts.append(tc)
                 rw = round_reward(run, rnd) if run else None
                 if rw is not None and rw >= 0.999:
                     passed += 1
                 ratios.append(round_caseratio(run, rnd) if run else 0.0)
             casepct = 100 * statistics.mean(ratios) if ratios else 0.0
-            cell[(disp, t)] = (passed, n, casepct, reached, False)
+            avg_tools = statistics.mean(tool_counts) if tool_counts else 0.0
+            cell[(disp, t)] = (passed, n, casepct, avg_tools, len(tool_counts), False)
 
     # leaderboard
     board = []
     for disp, ms, reason in MODELS:
         ds, cs, avg_rounds, perfect, scored = [], [], [], 0, 0
         for t in tasks:
-            p, n, cp, reached, blank = cell[(disp, t)]
+            p, n, cp, avg_tools, tool_rounds, blank = cell[(disp, t)]
             if blank:
                 continue
             scored += 1
             ds.append(p / n if n else 0)
             cs.append(cp)
-            avg_rounds.append(reached or 0)
+            if tool_rounds:
+                avg_rounds.append(avg_tools)
             if p == n and n > 0:
                 perfect += 1
         board.append({
@@ -156,9 +175,9 @@ def main():
         for t in tasks:
             row = [t, str(nrounds[t])]
             for d in cols:
-                p, n, cp, reached, blank = cell[(d, t)]
-                row.append("—" if blank else f"{p}/{n} c{round(cp)}% r{reached}")
-            row.append("each cell: passed_rounds/total · c=mean case pass % · r=rounds actually reached")
+                p, n, cp, avg_tools, tool_rounds, blank = cell[(d, t)]
+                row.append("—" if blank else f"{p}/{n} c{round(cp)}% r{round(avg_tools, 1)}")
+            row.append("each cell: passed_rounds/total · c=mean case pass % · r=mean agent-tool interactions per reached benchmark round")
             lines.append(",".join(row))
         open(csv, "w").write("\n".join(lines) + "\n")
         print(f"\nwrote {csv} ({len(tasks)} tasks × {len(cols)} models)")
