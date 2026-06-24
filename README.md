@@ -269,28 +269,27 @@ as follows:
 | Avg rounds | Mean number of agent-tool interactions per reached benchmark round, read from `steps/round-N/agent/trajectory.json`. If a run stops before later benchmark rounds, those unreached rounds are not included in this average. |
 | Perfect tasks | Number of tasks where every benchmark round passed, out of 26. This is the all-round completion count; for example, `9/26` equals a 34.6% completion rate. |
 
-Numbers below are the **2026-06-20 re-release**. Parenthesized values in Dataset score
-and Case score are the superseded June 13–16 leaderboard values, shown only where the
-value changed; rows without parentheses are new in this release. See
-[Known issues & responsible disclosure](#known-issues--responsible-disclosure) and
-[`CHANGELOG.md`](CHANGELOG.md) for the re-release details.
+The table below is the **current 2026-06-20 clean re-release**. Earlier June 13–16
+v1 numbers were withdrawn after the re-run and are not repeated here; see
+[`CHANGELOG.md`](CHANGELOG.md), [Known issues & responsible disclosure](#known-issues--responsible-disclosure),
+and [`legacy/`](legacy/README.md) for the historical record.
 
 | Agent | Reasoning | Dataset score | Case score | Avg rounds | Perfect tasks |
 |:--|:--|--:|--:|--:|--:|
-| Claude-Opus-4.8 | effort `xhigh` | 59.1 (42.5) | 96.6 (89.9) | 62.2 | 9/26 |
-| GPT-5.5 | effort `high` | 29.5 (23.5) | 81.8 (77.2) | 53.7 | 0/26 |
-| MiniMax-M3 | thinking `adaptive` | 23.4 (15.2) | 61.5 (69.2) | 123.7 | 2/26 |
-| GLM-5.2 | thinking on¹ | 16.2 | 47.6 | 66.1 | 1/26 |
-| DeepSeek-V4-Pro | effort `high` | 14.1 (10.8) | 61.7 (58.3) | 144.1 | 1/26 |
-| Kimi-K2.6 | thinking on¹ | 13.2 (23.1) | 65.7 (75.2) | 117.4 | 0/26 |
-| DeepSeek-V4-Flash | effort `high` | 12.2 (4.6) | 58.9 (52.5) | 122.2 | 0/26 |
-| Qwen3.7-Max | thinking on¹ | 11.9 (7.6) | 67.4 (64.7) | 117.1 | 0/26 |
-| Qwen3.6-Plus | thinking on¹ | 9.7 (10.1) | 67.7 (64.4) | 115.8 | 0/26 |
+| Claude-Opus-4.8 | effort `xhigh` | 59.1 | 96.6 | 62.2 | 9/26 |
+| GPT-5.5 | effort `high` | 29.5 | 81.8 | 53.7 | 0/26 |
+| MiniMax-M3 | thinking `adaptive` | 23.4 | 61.5 | 123.7 | 2/26 |
+| GLM-5.2 | thinking on¹ | 16.2 | 47.5 | 66.3 | 1/26 |
+| DeepSeek-V4-Pro | effort `high` | 14.1 | 61.7 | 144.1 | 1/26 |
+| Kimi-K2.6 | thinking on¹ | 13.2 | 65.7 | 117.4 | 0/26 |
+| DeepSeek-V4-Flash | effort `high` | 12.2 | 58.9 | 122.2 | 0/26 |
+| Qwen3.7-Max | thinking on¹ | 11.9 | 67.4 | 117.1 | 0/26 |
+| Qwen3.6-Plus | thinking on¹ | 9.7 | 67.7 | 115.8 | 0/26 |
 | Kimi-K2.7-Code | thinking on¹ | 7.8 | 45.4 | 67.5 | 0/26 |
-| GLM-5.1 | thinking on¹ | 5.9 (6.3) | 52.5 (48.4) | 88.4 | 0/26 |
-| MiniMax-M2.7 | reasoning split | 5.1 (0.8) | 44.9 (42.6) | 115.1 | 0/26 |
+| GLM-5.1 | thinking on¹ | 5.9 | 52.5 | 88.4 | 0/26 |
+| MiniMax-M2.7 | reasoning split | 5.1 | 44.9 | 115.1 | 0/26 |
 
-GLM-5.2 and Kimi-K2.7-Code are new in this release (no prior value).
+GLM-5.2 and Kimi-K2.7-Code were added in the 2026-06-20 re-release.
 
 *Reasoning* is the thinking configuration used for each model: models with an effort knob ran at the
 listed level (Opus at its highest, `xhigh`; the rest at `high`); ¹ models without an
