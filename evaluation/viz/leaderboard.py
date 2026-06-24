@@ -36,6 +36,7 @@ MODELS = [
     ("Kimi-K2.7-Code", "kimi-k2.7-code", "thinking on"),
     ("MiniMax-M3", "minimax-m3", "thinking `adaptive`"),
     ("DeepSeek-V4-Pro", "deepseek-v4-pro", "effort `high`"),
+    ("Doubao-Seed-2.1-Pro", "doubao-seed-2-1-pro", "effort `high`"),
     ("Qwen3.6-Plus", "qwen3.6-plus", "thinking on"),
     ("Qwen3.7-Max", "qwen3.7-max", "thinking on"),
     ("GLM-5.1", "glm-5.1", "thinking on"),

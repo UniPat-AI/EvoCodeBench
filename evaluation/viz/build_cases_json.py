@@ -24,6 +24,7 @@ MODELS = [
     ("Opus-4.8-xhigh", "claude-opus-4-8"), ("GPT-5.5", "gpt-5.5"), ("Kimi-K2.6", "kimi-k2.6"),
     ("Kimi-K2.7-Code", "kimi-k2.7-code"),
     ("MiniMax-M3", "minimax-m3"), ("DeepSeek-V4-Pro", "deepseek-v4-pro"), ("Qwen3.6-Plus", "qwen3.6-plus"),
+    ("Doubao-Seed-2.1-Pro", "doubao-seed-2-1-pro"),
     ("GLM-5.1", "glm-5.1"), ("GLM-5.2", "glm-5.2"), ("Qwen3.7-Max", "qwen3.7-max"),
     ("DeepSeek-V4-Flash", "deepseek-v4-flash"), ("MiniMax-M2.7", "minimax-m2.7"),
 ]
