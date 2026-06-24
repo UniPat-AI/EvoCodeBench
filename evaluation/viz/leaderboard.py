@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Aggregate EvoCode-Bench leaderboard + per-task sweep CSV from wotraj results.
+"""Aggregate EvoCode-Bench leaderboard + per-task sweep CSV from released run artifacts.
 
 For each (model, task):
   - passed_rounds / total_rounds  (round "passed" = binary reward 1)

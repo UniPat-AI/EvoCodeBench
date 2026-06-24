@@ -8,8 +8,9 @@ multi-step runner:
     <trial>/result.json                              # trial metadata
 
 Trials are grouped by task slug (the task directory name appears in the trial
-path). The script reports the official mean per-step reward plus the paper's
-MT@k / Completion metrics derived from the same per-step rewards.
+path). The script reports the official mean per-step reward, best-of-attempt
+MT@k, final-step completion, and the stricter all-steps-passed perfect-task
+rate derived from the same per-step rewards.
 
 Single-Round (SR) is measured from separate fast-forward runs (see the README's
 Single-Round Fast-Forward section); point --results-dir at those runs to score
@@ -114,7 +115,8 @@ def main() -> int:
 
     per_task_mean: dict[str, float] = {}   # official: mean over attempts of (fraction of steps passed)
     per_task_mtk: dict[str, float] = {}    # paper: best-of-attempt per step, then mean over steps
-    completed: dict[str, bool] = {}
+    completed_final_step: dict[str, bool] = {}
+    perfect_task: dict[str, bool] = {}
 
     for slug, step_names in tasks.items():
         n = len(step_names)
@@ -125,13 +127,18 @@ def main() -> int:
         per_task_mean[slug] = statistics.mean(attempt_scores)
         best_per_step = [max(passed(tr.get(i)) for tr in attempts) for i in range(1, n + 1)]
         per_task_mtk[slug] = sum(best_per_step) / n
-        completed[slug] = any(passed(tr.get(n)) >= 1.0 for tr in attempts)
+        completed_final_step[slug] = any(passed(tr.get(n)) >= 1.0 for tr in attempts)
+        perfect_task[slug] = any(
+            all(passed(tr.get(i)) >= 1.0 for i in range(1, n + 1))
+            for tr in attempts
+        )
 
     n_tasks = len(tasks)
     evaluated = len(per_task_mean)
     mean_reward = 100 * statistics.mean(per_task_mean.values()) if per_task_mean else 0.0
     mt_at_k = 100 * sum(per_task_mtk.values()) / n_tasks if n_tasks else 0.0
-    comp = 100 * sum(1 for v in completed.values() if v) / n_tasks if n_tasks else 0.0
+    final_step_comp = 100 * sum(1 for v in completed_final_step.values() if v) / n_tasks if n_tasks else 0.0
+    perfect = 100 * sum(1 for v in perfect_task.values() if v) / n_tasks if n_tasks else 0.0
     hard = (100 * sum(1 for v in per_task_mean.values() if v <= 0.5) / evaluated) if evaluated else 0.0
 
     metrics = {
@@ -139,7 +146,9 @@ def main() -> int:
         "evaluated": evaluated,
         "mean_reward": round(mean_reward, 2),
         "mt_at_k": round(mt_at_k, 2),
-        "completion_rate": round(comp, 2),
+        "final_step_completion_rate": round(final_step_comp, 2),
+        "completion_rate": round(final_step_comp, 2),
+        "perfect_task_rate": round(perfect, 2),
         "hard_task_rate": round(hard, 2),
     }
 
@@ -149,7 +158,8 @@ def main() -> int:
         print(f"Tasks: {n_tasks}  (evaluated: {evaluated})")
         print(f"  Mean per-step reward (official): {mean_reward:.1f}")
         print(f"  MT@k (best-of-attempt):          {mt_at_k:.1f}")
-        print(f"  Completion rate:                 {comp:.1f}")
+        print(f"  Final-step completion rate:      {final_step_comp:.1f}")
+        print(f"  Perfect-task rate (all steps):   {perfect:.1f}")
         print(f"  Hard-task rate (score <= 0.5):   {hard:.1f}")
         if evaluated < n_tasks:
             print(f"  note: {n_tasks - evaluated} task(s) had no trials under {args.results_dir}")
