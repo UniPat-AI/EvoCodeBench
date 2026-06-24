@@ -254,16 +254,26 @@ python evaluation/compute_metrics.py \
 ## Results
 
 Evaluated on the current dataset release with the Harbor official multi-step runner:
-full 5–15 round chains, **one attempt per task** (no best-of-k). The score is the
-**dataset score** defined in [Metrics](#metrics) — the mean over 26 tasks of each
-task's `passed_rounds / total_rounds`. `oracle` scores 1.0 and `nop` scores 0 on every
-task. On the hardest, longest tasks some agents exhaust the 30-minute-per-round time
-budget and the chain aborts before later rounds; those rounds count as 0 (see
-[`CHANGELOG.md`](CHANGELOG.md)).
+full 5–15 round chains, **one attempt per task** (no best-of-k). `oracle` scores 1.0
+and `nop` scores 0 on every task.
 
-> Numbers below are the **2026-06-20 re-release**. The previous (June 13–16) leaderboard
-> is superseded — see [Known issues & responsible disclosure](#known-issues--responsible-disclosure).
-> The old values are shown in parentheses where they moved.
+The leaderboard mixes percentages, counts, and interaction counts, so read the columns
+as follows:
+
+| Column | Definition |
+|:--|:--|
+| Agent | Model or agent backend evaluated with the `terminus-2` scaffold. |
+| Reasoning | Thinking / effort setting used for that model. |
+| Dataset score | Current score on a 0–100 scale. For each task, compute `passed_rounds / total_rounds`; then average that task score over all 26 tasks and multiply by 100. If a chain aborts before later rounds, those missing rounds count as 0. This is close in spirit to MT@1 because it is one attempt per task, but it is not the legacy paper MT@1: this table uses the Harbor official multi-step full-chain runner and averages binary per-round rewards within each task first. |
+| Case score | Current score on a 0–100 scale using verifier test cases instead of all-or-nothing round rewards: average each round's `passed_test_cases / total_test_cases`, then average by task and by dataset. Build failures and unreached rounds count as 0. |
+| Avg rounds | Mean number of agent-tool interactions per reached benchmark round, read from `steps/round-N/agent/trajectory.json`. If a run stops before later benchmark rounds, those unreached rounds are not included in this average. |
+| Perfect tasks | Number of tasks where every benchmark round passed, out of 26. This is the all-round completion count; for example, `9/26` equals a 34.6% completion rate. |
+
+Numbers below are the **2026-06-20 re-release**. Parenthesized values in Dataset score
+and Case score are the superseded June 13–16 leaderboard values, shown only where the
+value changed; rows without parentheses are new in this release. See
+[Known issues & responsible disclosure](#known-issues--responsible-disclosure) and
+[`CHANGELOG.md`](CHANGELOG.md) for the re-release details.
 
 | Agent | Reasoning | Dataset score | Case score | Avg rounds | Perfect tasks |
 |:--|:--|--:|--:|--:|--:|
@@ -282,25 +292,16 @@ budget and the chain aborts before later rounds; those rounds count as 0 (see
 
 GLM-5.2 and Kimi-K2.7-Code are new in this release (no prior value).
 
-*Dataset score* is the mean per-task score ×100, where a task's score is `passed_rounds / total_rounds`
-and a round is "passed" only if it earns the binary reward 1 (**every** test case of that round passes).
-
-*Case score* is the finer-grained companion. For each task, take each round's
-`passed_test_cases / total_test_cases`, average over the task's rounds (a round whose code fails to build,
-or that the chain never reached, counts as 0), then average over the 26 tasks ×100. It credits the partial
-progress the all-or-nothing round reward hides — e.g. GPT-5.5 scores 29.5 on rounds but passes **81.8%** of
-test cases, because it often misses a round by just one or two cases. Both scores rank Opus-4.8 first, but
-the case score spreads the field more smoothly.
-
-*Avg rounds* is the mean number of agent-tool interactions per reached benchmark round, computed from
-the run's `agent/trajectory.json` files. If a run aborts before later benchmark rounds, those missing
-rounds are not included in this average; they still count as 0 for Dataset score and Case score.
-
 *Reasoning* is the thinking configuration used for each model: models with an effort knob ran at the
 listed level (Opus at its highest, `xhigh`; the rest at `high`); ¹ models without an
 effort knob ran with their native thinking simply enabled (Qwen `enable_thinking`,
 GLM/Kimi `thinking.type=enabled`), and MiniMax M3/M2.7 used their adaptive / split
 reasoning modes. All agents used the `terminus-2` scaffold.
+
+The case score credits partial progress that the all-or-nothing Dataset score hides —
+e.g. GPT-5.5 scores 29.5 on binary round rewards but passes **81.8%** of verifier test
+cases, because it often misses a round by just one or two cases.
+
 Per-task / per-round / per-test-case detail: [`evaluation/sweeps/sweep_2026-06_single_shot.csv`](evaluation/sweeps/sweep_2026-06_single_shot.csv)
 and the [interactive results site](https://unipat-ai.github.io/EvoCodeBench/).
 The released Hugging Face resources also include the clean evaluation trajectories; use the
